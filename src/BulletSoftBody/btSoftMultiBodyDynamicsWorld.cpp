@@ -18,6 +18,7 @@ subject to the following restrictions:
 
 //softbody & helpers
 #include "BulletSoftBody/btSoftBody.h"
+#include "BulletCollision/CollisionShapes/btVoxelShape.h"
 #include "BulletSoftBody/btSoftBodyHelpers.h"
 #include "BulletSoftBody/btSoftBodySolvers.h"
 #include "BulletSoftBody/btDefaultSoftBodySolver.h"
@@ -300,7 +301,7 @@ void btSoftMultiBodyDynamicsWorld::rayTestSingle(const btTransform& rayFromTrans
 					btCollisionWorld::LocalRayResult rayResult(collisionObject,
 															   &shapeInfo,
 															   normal,
-															   softResult.fraction);
+															   softResult.fraction,btVoxelInfo());
 					bool normalInWorldSpace = true;
 					resultCallback.addSingleResult(rayResult, normalInWorldSpace);
 				}
