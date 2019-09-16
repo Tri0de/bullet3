@@ -37,11 +37,19 @@ ATTRIBUTE_ALIGNED16(struct) btVoxelInfo
 	/// It is somewhat optional, even with the same id the collision algorithm will attempt to detect changes
 	long				m_voxelTypeId;
 	/// Generic location for additional information to be attached to the voxel, which will be returned by raycasts/collisions
+	int m_x;
+
+	int m_y;
+
+	int m_z;
+	
+	/// Generic location for additional information to be attached to the voxel, which will be returned by raycasts/collisions
 	void*				m_userPointer;
 	/// The shape of the voxel
 	btCollisionShape*	m_collisionShape;
 	/// The offset of the shape from the center of the voxel
 	btVector3			m_collisionOffset;
+	
 	
 	/// The friction of the voxel
 	btScalar			m_friction;
@@ -51,9 +59,19 @@ ATTRIBUTE_ALIGNED16(struct) btVoxelInfo
 	btScalar			m_rollingFriction;
 
 	/**@brief No initialization constructor */
-	SIMD_FORCE_INLINE btVoxelInfo()
-	{
-	}
+	SIMD_FORCE_INLINE btVoxelInfo():
+	m_tracable(0),
+	m_blocking(0),
+    m_voxelTypeId(0),
+    m_x(0),
+    m_y(0),
+    m_z(0),
+    m_collisionShape(0),
+    m_collisionOffset(btVector3(0,0,0)),
+    m_friction(0),
+    m_restitution(0),
+    m_rollingFriction(0)
+	{}
 
 	/**@brief Constructor from scalars
 	* @param x X value
@@ -73,14 +91,40 @@ ATTRIBUTE_ALIGNED16(struct) btVoxelInfo
 		m_restitution = _restitution;
 		m_rollingFriction = _rollingFriction;
 	}
+
+	/**@brief Copy constructor */
+	SIMD_FORCE_INLINE btVoxelInfo (const btVoxelInfo& other)
+			: m_tracable(other.m_tracable),
+			  m_blocking(other.m_blocking),
+			  m_voxelTypeId(other.m_voxelTypeId),
+			  m_x(other.m_x),
+			  m_y(other.m_y),
+			  m_z(other.m_z),
+			  m_collisionShape(other.m_collisionShape),
+			  m_friction(other.m_friction),
+			  m_restitution(other.m_restitution),
+			  m_rollingFriction(other.m_rollingFriction),
+              m_collisionOffset(other.m_collisionOffset)
+	{
+	}
+
+	/**@brief Constructor from scalars
+	* @param x X value
+	* @param y Y value
+	* @param z Z value
+	*/
+	SIMD_FORCE_INLINE btVoxelInfo(bool _traceable,bool _blocking, long _voxelTypeId, int _x, int _y, int _z, btCollisionShape* const _collisionShape, const btVector3& _collisionOffset, btScalar _friction, btScalar _restitution, btScalar _rollingFriction)
+			: m_x(_x), m_y(_y),m_z(_z),m_tracable(_traceable),m_blocking(_blocking),m_voxelTypeId(_voxelTypeId), m_collisionShape(_collisionShape),m_friction(_friction),m_restitution(_restitution),m_rollingFriction(_rollingFriction),m_collisionOffset(_collisionOffset)
+	{}
+
+	SIMD_FORCE_INLINE bool isEmpty(){return m_voxelTypeId == -1;}
 };
 
 /// Provider of voxel information for a given voxel position
 struct btVoxelContentProvider
 {
 	virtual ~btVoxelContentProvider() {}
-	
-	virtual btVoxelInfo getVoxel(int x, int y, int z) const = 0;
+	virtual void getVoxel(int x, int y, int z,btVoxelInfo&) const = 0;
 
 };
 

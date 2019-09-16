@@ -63,7 +63,7 @@ void btCompoundCollisionAlgorithm::preallocateChildAlgorithms(const btCollisionO
 		{
 			const btCollisionShape* childShape = compoundShape->getChildShape(i);
 
-			btCollisionObjectWrapper childWrap(colObjWrap, childShape, colObjWrap->getCollisionObject(), colObjWrap->getWorldTransform(), -1, i);  //wrong child trans, but unused (hopefully)
+			btCollisionObjectWrapper childWrap(colObjWrap, childShape, colObjWrap->getCollisionObject(), colObjWrap->getWorldTransform(), -1, i,colObjWrap->getVoxelInfo());  //wrong child trans, but unused (hopefully)
 			m_childCollisionAlgorithms[i] = m_dispatcher->findAlgorithm(&childWrap, otherObjWrap, m_sharedManifold, BT_CONTACT_POINT_ALGORITHMS);
 
 			btAlignedObjectArray<btCollisionAlgorithm*> m_childCollisionAlgorithmsContact;
@@ -139,7 +139,7 @@ public:
 
 		if (TestAabbAgainstAabb2(aabbMin0, aabbMax0, aabbMin1, aabbMax1))
 		{
-			btCollisionObjectWrapper compoundWrap(this->m_compoundColObjWrap, childShape, m_compoundColObjWrap->getCollisionObject(), newChildWorldTrans, -1, index);
+			btCollisionObjectWrapper compoundWrap(this->m_compoundColObjWrap, childShape, m_compoundColObjWrap->getCollisionObject(), newChildWorldTrans, -1, index, m_compoundColObjWrap->getVoxelInfo());
 
 			btCollisionAlgorithm* algo = 0;
 			bool allocatedAlgorithm = false;
