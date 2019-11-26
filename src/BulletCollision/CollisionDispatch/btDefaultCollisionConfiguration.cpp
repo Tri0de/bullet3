@@ -93,6 +93,12 @@ btDefaultCollisionConfiguration::btDefaultCollisionConfiguration(const btDefault
 	mem = btAlignedAlloc(sizeof(btConvexPlaneCollisionAlgorithm::CreateFunc), 16);
 	m_planeConvexCF = new (mem) btConvexPlaneCollisionAlgorithm::CreateFunc;
 	m_planeConvexCF->m_swapped = true;
+	
+	mem = btAlignedAlloc(sizeof(btVoxelCollisionAlgorithm::CreateFunc), 16);
+        m_voxelCreateFunc = new (mem)btVoxelCollisionAlgorithm::CreateFunc;
+
+        mem = btAlignedAlloc(sizeof(btVoxelCollisionAlgorithm::SwappedCreateFunc), 16);
+        m_swappedVoxelCreateFunc = new (mem)btVoxelCollisionAlgorithm::SwappedCreateFunc;
 
 	///calculate maximum element size, big enough to fit any collision algorithm in the memory pool
 	int maxSize = sizeof(btConvexConvexAlgorithm);
