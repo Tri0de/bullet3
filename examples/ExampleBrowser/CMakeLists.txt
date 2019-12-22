@@ -389,6 +389,8 @@ SET(BulletExampleBrowser_SRCS
   ../Constraints/ConstraintPhysicsSetup.cpp
   ../Constraints/ConstraintPhysicsSetup.h
 
+  ../VoxelDemo/VoxelDemo.h
+  ../VoxelDemo/VoxelDemo.cpp
 
 	../ThirdPartyLibs/stb_image/stb_image.cpp
 	../ThirdPartyLibs/stb_image/stb_image.h

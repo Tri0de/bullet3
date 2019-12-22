@@ -20,6 +20,7 @@ subject to the following restrictions:
 #include "BulletCollision/CollisionDispatch/btConvexConcaveCollisionAlgorithm.h"
 #include "BulletCollision/CollisionDispatch/btCompoundCollisionAlgorithm.h"
 #include "BulletCollision/CollisionDispatch/btCompoundCompoundCollisionAlgorithm.h"
+#include "BulletCollision/CollisionDispatch/btVoxelCollisionAlgorithm.h"
 
 #include "BulletCollision/CollisionDispatch/btConvexPlaneCollisionAlgorithm.h"
 #include "BulletCollision/CollisionDispatch/btBoxBoxCollisionAlgorithm.h"
@@ -159,6 +160,12 @@ btDefaultCollisionConfiguration::~btDefaultCollisionConfiguration()
 
 	m_swappedCompoundCreateFunc->~btCollisionAlgorithmCreateFunc();
 	btAlignedFree(m_swappedCompoundCreateFunc);
+
+	m_voxelCreateFunc->~btCollisionAlgorithmCreateFunc();
+	btAlignedFree(m_voxelCreateFunc);
+
+	m_swappedVoxelCreateFunc->~btCollisionAlgorithmCreateFunc();
+	btAlignedFree(m_swappedVoxelCreateFunc);
 
 	m_emptyCreateFunc->~btCollisionAlgorithmCreateFunc();
 	btAlignedFree(m_emptyCreateFunc);
@@ -325,6 +332,15 @@ btCollisionAlgorithmCreateFunc* btDefaultCollisionConfiguration::getCollisionAlg
 	if (btBroadphaseProxy::isCompound(proxyType0) && btBroadphaseProxy::isCompound(proxyType1))
 	{
 		return m_compoundCompoundCreateFunc;
+	}
+
+	if (btBroadphaseProxy::isVoxel(proxyType0))
+	{
+		return m_voxelCreateFunc;
+	}
+	else if (btBroadphaseProxy::isVoxel(proxyType1))
+	{
+		return m_swappedVoxelCreateFunc;
 	}
 
 	if (btBroadphaseProxy::isCompound(proxyType0))

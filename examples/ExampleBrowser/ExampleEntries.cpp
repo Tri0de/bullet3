@@ -14,6 +14,7 @@
 #include "../ForkLift/ForkLiftDemo.h"
 #include "../MultiThreadedDemo/MultiThreadedDemo.h"
 #include "../BasicDemo/BasicExample.h"
+#include "../VoxelDemo/VoxelDemo.h"
 #include "../Planar2D/Planar2D.h"
 #include "../Benchmarks/BenchmarkDemo.h"
 #include "../Importers/ImportObjDemo/ImportObjExample.h"
@@ -158,6 +159,7 @@ static ExampleEntry gDefaultExamples[] =
 					 PhysicsServerCreateFuncBullet2),
 		ExampleEntry(1, "Physics Client (Shared Mem)", "Create a physics client that can communicate with a physics server over shared memory.", PhysicsClientCreateFunc),
 
+	ExampleEntry(1,"Voxel Demo","Create some rigid bodies using box collision shapes to collide with a voxel world. Press W for wireframe, A to show AABBs, I to suspend/restart physics simulation. Press D to toggle auto-deactivation of the simulation. ", VoxelDemoCreateFunc),
 		ExampleEntry(1, "Physics Server (Logging)", "Create a physics server that communicates with a physics client over shared memory. It will log all commands to a file.",
 					 PhysicsServerCreateFuncBullet2, PHYSICS_SERVER_ENABLE_COMMAND_LOGGING),
 		ExampleEntry(1, "Physics Server (Replay Log)", "Create a physics server that replay a command log from disk.",

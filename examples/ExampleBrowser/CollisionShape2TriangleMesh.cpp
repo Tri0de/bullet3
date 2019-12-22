@@ -212,6 +212,10 @@ void CollisionShape2TriangleMesh(btCollisionShape* collisionShape, const btTrans
 					{
 						//not yet
 					}
+					if(collisionShape->isVoxel())
+					{
+						// Probably can't do anything here, but isn't an error
+					}
 					else
 					{
 						btAssert(0);
