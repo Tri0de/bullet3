@@ -106,7 +106,7 @@ void btConvexTriangleCallback::processTriangle(btVector3* triangle, int partId, 
 		btTriangleShape tm(triangle[0], triangle[1], triangle[2]);
 		tm.setMargin(m_collisionMarginTriangle);
 
-		btCollisionObjectWrapper triObWrap(m_triBodyWrap, &tm, m_triBodyWrap->getCollisionObject(), m_triBodyWrap->getWorldTransform(), partId, triangleIndex,m_triBodyWrap->getVoxelInfo());  //correct transform?
+		btCollisionObjectWrapper triObWrap(m_triBodyWrap, &tm, m_triBodyWrap->getCollisionObject(), m_triBodyWrap->getWorldTransform(), partId, triangleIndex);  //correct transform?
 		btCollisionAlgorithm* colAlgo = 0;
 
 		if (m_resultOut->m_closestPointDistanceThreshold > 0)

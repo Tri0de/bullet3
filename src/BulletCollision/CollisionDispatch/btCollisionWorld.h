@@ -178,13 +178,11 @@ public:
 		LocalRayResult(const btCollisionObject* collisionObject,
 					   LocalShapeInfo* localShapeInfo,
 					   const btVector3& hitNormalLocal,
-					   btScalar hitFraction,
-					   const btVoxelInfo& voxelInfo)
+					   btScalar hitFraction)
 			: m_collisionObject(collisionObject),
 			  m_localShapeInfo(localShapeInfo),
 			  m_hitNormalLocal(hitNormalLocal),
-			  m_hitFraction(hitFraction),
-			  m_voxelInfo(voxelInfo)
+			  m_hitFraction(hitFraction)
 		{
 		}
 
@@ -192,7 +190,6 @@ public:
 		LocalShapeInfo* m_localShapeInfo;
 		btVector3 m_hitNormalLocal;
 		btScalar m_hitFraction;
-		btVoxelInfo      m_voxelInfo;
 	};
 
 	///RayResultCallback is used to report new raycast results
@@ -247,14 +244,11 @@ public:
 		btVector3 m_hitNormalWorld;
 		btVector3 m_hitPointWorld;
 
-		btVoxelInfo m_voxelInfo;
 
 		virtual btScalar addSingleResult(LocalRayResult& rayResult, bool normalInWorldSpace)
 		{
 			//caller already does the filter on the m_closestHitFraction
 			btAssert(rayResult.m_hitFraction <= m_closestHitFraction);
-
-			m_voxelInfo = rayResult.m_voxelInfo;
 			m_closestHitFraction = rayResult.m_hitFraction;
 			m_collisionObject = rayResult.m_collisionObject;
 			if (normalInWorldSpace)
@@ -317,14 +311,12 @@ public:
 						  LocalShapeInfo* localShapeInfo,
 						  const btVector3& hitNormalLocal,
 						  const btVector3& hitPointLocal,
-						  btScalar hitFraction,
-						  const btVoxelInfo& voxelInfo)
+						  btScalar hitFraction)
 			: m_hitCollisionObject(hitCollisionObject),
 			  m_localShapeInfo(localShapeInfo),
 			  m_hitNormalLocal(hitNormalLocal),
 			  m_hitPointLocal(hitPointLocal),
-			  m_hitFraction(hitFraction),
-			  m_voxelInfo(voxelInfo)
+			  m_hitFraction(hitFraction)
 		{
 		}
 
@@ -333,7 +325,6 @@ public:
 		btVector3 m_hitNormalLocal;
 		btVector3 m_hitPointLocal;
 		btScalar m_hitFraction;
-		btVoxelInfo m_voxelInfo;
 	};
 
 	///RayResultCallback is used to report new raycast results
@@ -383,7 +374,6 @@ public:
 
 		btVector3 m_hitNormalWorld;
 		btVector3 m_hitPointWorld;
-		btVoxelInfo m_voxelInfo;
 		
 		const btCollisionObject* m_hitCollisionObject;
 
@@ -392,7 +382,6 @@ public:
 			//caller already does the filter on the m_closestHitFraction
 			btAssert(convexResult.m_hitFraction <= m_closestHitFraction);
 
-			m_voxelInfo = convexResult.m_voxelInfo;
 			m_closestHitFraction = convexResult.m_hitFraction;
 			m_hitCollisionObject = convexResult.m_hitCollisionObject;
 			if (normalInWorldSpace)

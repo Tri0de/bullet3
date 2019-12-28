@@ -301,7 +301,7 @@ void btSoftMultiBodyDynamicsWorld::rayTestSingle(const btTransform& rayFromTrans
 					btCollisionWorld::LocalRayResult rayResult(collisionObject,
 															   &shapeInfo,
 															   normal,
-															   softResult.fraction,btVoxelInfo());
+															   softResult.fraction);
 					bool normalInWorldSpace = true;
 					resultCallback.addSingleResult(rayResult, normalInWorldSpace);
 				}

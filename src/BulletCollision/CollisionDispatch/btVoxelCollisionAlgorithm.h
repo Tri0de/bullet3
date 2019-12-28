@@ -4,8 +4,8 @@ Copyright (c) 2003-2006 Erwin Coumans  http://continuousphysics.com/Bullet/
 
 This software is provided 'as-is', without any express or implied warranty.
 In no event will the authors be held liable for any damages arising from the use of this software.
-Permission is granted to anyone to use this software for any purpose, 
-including commercial applications, and to alter it and redistribute it freely, 
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it freely,
 subject to the following restrictions:
 
 1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
@@ -20,12 +20,15 @@ subject to the following restrictions:
 #include "btActivatingCollisionAlgorithm.h"
 #include "BulletCollision/BroadphaseCollision/btDispatcher.h"
 #include "BulletCollision/BroadphaseCollision/btBroadphaseInterface.h"
-
 #include "BulletCollision/NarrowPhaseCollision/btPersistentManifold.h"
+#include "Bullet3Common/b3AlignedObjectArray.h"
+
 class btDispatcher;
+
 #include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
 #include "btCollisionCreateFunc.h"
 #include "LinearMath/btAlignedObjectArray.h"
+
 class btDispatcher;
 class btCollisionObject;
 
@@ -40,7 +43,7 @@ struct btVector3i {
 	SIMD_FORCE_INLINE btVector3i()
 	{
 	}
-	
+
 	/**@brief Constructor from scalars
 	* @param x X value
 	* @param y Y value
@@ -52,6 +55,17 @@ struct btVector3i {
 		y = _y;
 		z = _z;
 	}
+
+    SIMD_FORCE_INLINE bool operator==(const btVector3i& other) const
+    {
+        return (this->x == other.x && this->y == other.y  && this->z == other.z);
+    }
+
+    SIMD_FORCE_INLINE bool operator!=(const btVector3i& other) const
+    {
+        return !(*this == other);
+    }
+
 };
 
 ATTRIBUTE_ALIGNED16(struct) btVoxelCollisionInfo
@@ -67,7 +81,7 @@ ATTRIBUTE_ALIGNED16(struct) btVoxelCollisionInfo
 class btVoxelCollisionAlgorithm : public btCollisionAlgorithm
 {
 protected:
-	btAlignedObjectArray<btVoxelCollisionInfo> m_voxelCollisionInfo;
+	b3AlignedObjectArray<btVoxelCollisionInfo> m_voxelCollisionInfo;
 	bool m_isSwapped;
 	btVector3i m_lastMin;
 	btVector3i m_lastMax;
@@ -88,11 +102,13 @@ public:
 		int i;
 		for (i=0;i<m_voxelCollisionInfo.size();i++)
 		{
-			m_voxelCollisionInfo[i].algorithm->getAllContactManifolds(manifoldArray);
+		    if(m_voxelCollisionInfo[i].algorithm) {
+			    m_voxelCollisionInfo[i].algorithm->getAllContactManifolds(manifoldArray);
+			}
 		}
 	}
 
-	
+
 	struct CreateFunc :public 	btCollisionAlgorithmCreateFunc
 	{
 		virtual	btCollisionAlgorithm* CreateCollisionAlgorithm(btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* body0Wrap,const btCollisionObjectWrapper* body1Wrap)

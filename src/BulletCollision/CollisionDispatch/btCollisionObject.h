@@ -32,6 +32,8 @@ struct btCollisionShapeData;
 #include "LinearMath/btAlignedAllocator.h"
 #include "LinearMath/btAlignedObjectArray.h"
 
+#include "BulletCollision/CollisionDispatch/btVoxelCollisionAlgorithm.h"
+
 typedef btAlignedObjectArray<class btCollisionObject*> btCollisionObjectArray;
 
 #ifdef BT_USE_DOUBLE_PRECISION
@@ -122,6 +124,8 @@ protected:
 
 	btVector3 m_customDebugColorRGB;
 
+	btVector3i m_voxelPosition;
+
 public:
 	BT_DECLARE_ALIGNED_ALLOCATOR();
 
@@ -137,7 +141,8 @@ public:
 		CF_HAS_CONTACT_STIFFNESS_DAMPING = 128,
 		CF_HAS_CUSTOM_DEBUG_RENDERING_COLOR = 256,
 		CF_HAS_FRICTION_ANCHOR = 512,
-		CF_HAS_COLLISION_SOUND_TRIGGER = 1024
+		CF_HAS_COLLISION_SOUND_TRIGGER = 1024,
+		CF_VOXEL_OBJECT = 2048 
 	};
 
 	enum CollisionObjectTypes
@@ -553,6 +558,20 @@ public:
 	void setUserIndex3(int index)
 	{
 		m_userIndex3 = index;
+	}
+
+	void setVoxelPosition(const btVector3i& pos){
+		m_collisionFlags |= CF_VOXEL_OBJECT;
+		m_voxelPosition = pos;
+	}
+
+	bool getVoxelPosition(btVector3i& voxelPosition){
+		bool hasVoxel = (0 != (m_collisionFlags & CF_HAS_CUSTOM_DEBUG_RENDERING_COLOR));
+		if (hasVoxel)
+		{
+			voxelPosition = m_voxelPosition;
+		}
+		return hasVoxel;
 	}
 
 	int getUpdateRevisionInternal() const
