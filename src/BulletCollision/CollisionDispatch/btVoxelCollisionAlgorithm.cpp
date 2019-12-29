@@ -66,12 +66,12 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 	otherObjWrap->getCollisionShape()->getAabb(otherTransform, aabbMin, aabbMax);
 
 	btVector3 scale = voxelShape->getLocalScaling();
-	btVector3i regionMin((int)((aabbMin.x() / scale.x()) - .5),
-						 (int)((aabbMin.y() / scale.y()) - .5),
-						 (int)((aabbMin.z() / scale.z()) - .5));
-	btVector3i regionMax((int)((aabbMax.x() / scale.x()) + .5),
-						 (int)((aabbMax.y() / scale.y()) + .5),
-						 (int)((aabbMax.z() / scale.z()) + .5));
+	btVector3i regionMin(static_cast <int> (floor(aabbMin.x() / scale.x() + .5)),
+                             static_cast <int> (floor(aabbMin.y() / scale.y() + .5)),
+                             static_cast <int> (floor(aabbMin.z() / scale.z() + .5)));
+    btVector3i regionMax(static_cast <int> (floor(aabbMax.x() / scale.x() + .5)),
+                         static_cast <int> (floor(aabbMax.y() / scale.y() + .5)),
+                         static_cast <int> (floor(aabbMax.z() / scale.z() + .5)));
 	// Remove out of bounds collision info
 	int i = 0;
 	int numChildren = 0;
@@ -124,17 +124,16 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 		else
 		{
 			contentProvider->getVoxel(info.position.x, info.position.y, info.position.z, childInfo);
+			if (info.algorithm != nullptr && (childInfo.m_collisionShape->getShapeType() != info.shapeType || !childInfo.m_blocking)) {
+                btCollisionAlgorithm* algo = info.algorithm;
+                info.algorithm = nullptr;
+                algo->~btCollisionAlgorithm();
+                m_dispatcher->freeCollisionAlgorithm(algo);
+            }
 			if (childInfo.m_blocking)
 			{
-				if (info.algorithm != nullptr && childInfo.m_collisionShape->getShapeType() != info.shapeType)
-				{
-					btCollisionAlgorithm* algo = info.algorithm;
-					info.algorithm = nullptr;
-					algo->~btCollisionAlgorithm();
-					m_dispatcher->freeCollisionAlgorithm(algo);
-				}
                 btCollisionObjectWrapper voxelWrap(colObjWrap, childInfo.m_collisionShape, colObjWrap->getCollisionObject(),
-                                                voxelTranform, -1, -1);     
+                                                voxelTranform, -1, -1);
 				if (info.algorithm == nullptr)
 				{
 					info.algorithm = m_dispatcher->findAlgorithm(&voxelWrap, otherObjWrap, m_sharedManifold,
@@ -247,7 +246,7 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 	// 			collisionInfo.voxelTypeId = info.m_voxelTypeId;
 	// 		}
 
-			
+
 	// 	}
 	// }
 	m_lastMin = regionMin;

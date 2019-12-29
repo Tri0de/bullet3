@@ -566,7 +566,7 @@ public:
 	}
 
 	bool getVoxelPosition(btVector3i& voxelPosition){
-		bool hasVoxel = (0 != (m_collisionFlags & CF_HAS_CUSTOM_DEBUG_RENDERING_COLOR));
+		bool hasVoxel = (0 != (m_collisionFlags & CF_VOXEL_OBJECT));
 		if (hasVoxel)
 		{
 			voxelPosition = m_voxelPosition;
