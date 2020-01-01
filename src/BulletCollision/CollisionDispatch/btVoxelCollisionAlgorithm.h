@@ -66,6 +66,26 @@ struct btVector3i {
         return !(*this == other);
     }
 
+    SIMD_FORCE_INLINE unsigned int getHash() const
+    {
+        int a = (x & 0xff);
+        int b = ((y & 0xf) << 8);
+        int c = ((z & 0xff) << 16);
+        long int key = a + b + c;
+
+        key += ~(key << 15);
+        key ^= (key >> 10);
+        key += (key << 3);
+        key ^= (key >> 6);
+        key += ~(key << 11);
+        key ^= (key >> 16);
+        return (int) key;
+    }
+
+    bool equals(const btVector3i& other) const
+    {
+		return ((x == other.x) && (y == other.y) && (z == other.z));
+    }
 };
 
 ATTRIBUTE_ALIGNED16(struct) btVoxelCollisionInfo

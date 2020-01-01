@@ -166,21 +166,6 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
                     resultOut->setShapeIdentifiersB(-1, i);
                 }
 
-                // btManifoldArray manifoldArray;
-                // if (info.algorithm)
-                // {
-                //    info.algorithm->getAllContactManifolds(manifoldArray);
-                //     for (int m = 0; m < manifoldArray.size(); m++)
-                //     {
-                //         if (manifoldArray[m]->getNumContacts())
-                //         {
-                //             resultOut->setPersistentManifold(manifoldArray[m]);
-                //             resultOut->refreshContactPoints();
-                //         }
-                //     }
-                // }
-
-
                 info.algorithm->processCollision(&voxelWrap, otherObjWrap, dispatchInfo, resultOut);
 
                 if (resultOut->getBody0Internal() == colObjWrap->getCollisionObject())
@@ -201,54 +186,6 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 		m_voxelCollisionInfo.resize(numChildren);
 	}
 
-	// {
-	// 	btManifoldArray manifoldArray;
-	// 	for (i = 0; i < m_voxelCollisionInfo.size(); i++)
-	// 	{
-	// 		if (m_voxelCollisionInfo[i].algorithm)
-	// 		{
-	// 			m_voxelCollisionInfo[i].algorithm->getAllContactManifolds(manifoldArray);
-	// 			for (int m = 0; m < manifoldArray.size(); m++)
-	// 			{
-	// 				if (manifoldArray[m]->getNumContacts())
-	// 				{
-	// 					resultOut->setPersistentManifold(manifoldArray[m]);
-	// 					resultOut->refreshContactPoints();
-	// 				}
-	// 			}
-	// 			manifoldArray.resize(0);
-	// 		}
-	// 	}
-	// }
-
-	// for (i = 0; i < m_voxelCollisionInfo.size(); ++i)
-	// {
-	// 	btVoxelCollisionInfo& collisionInfo = m_voxelCollisionInfo[i];
-
-	// 	if (collisionInfo.algorithm)
-	// 	{
-	// 		// Remove old algorithm if necessary
-	// 		if (!info.m_blocking || info.m_voxelTypeId != collisionInfo.voxelTypeId || info.m_collisionShape->getShapeType() != collisionInfo.shapeType)
-	// 		{
-	// 			collisionInfo.algorithm->~btCollisionAlgorithm();
-	// 			m_dispatcher->freeCollisionAlgorithm(collisionInfo.algorithm);
-	// 			collisionInfo.algorithm = nullptr;
-	// 		}
-	// 	}
-	// 	if (info.m_blocking)
-	// 	{
-	// 		// Add new algorithm if necessary
-	// 		if (!collisionInfo.algorithm)
-	// 		{
-	// 			collisionInfo.algorithm = m_dispatcher->findAlgorithm(&voxelWrap, otherObjWrap, m_sharedManifold,
-	// 																  BT_CLOSEST_POINT_ALGORITHMS);
-	// 			collisionInfo.shapeType = info.m_collisionShape->getShapeType();
-	// 			collisionInfo.voxelTypeId = info.m_voxelTypeId;
-	// 		}
-
-
-	// 	}
-	// }
 	m_lastMin = regionMin;
 	m_lastMax = regionMax;
 }
