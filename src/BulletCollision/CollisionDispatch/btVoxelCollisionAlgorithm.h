@@ -34,7 +34,9 @@ class btCollisionObject;
 
 class btCollisionShape;
 
-struct btVector3i {
+ATTRIBUTE_ALIGNED16(struct) btVector3i {
+    BT_DECLARE_ALIGNED_ALLOCATOR();
+
 	int x;
 	int y;
 	int z;
@@ -68,11 +70,12 @@ struct btVector3i {
 
     SIMD_FORCE_INLINE unsigned int getHash() const
     {
-        int a = (x & 0xff);
-        int b = ((y & 0xf) << 8);
-        int c = ((z & 0xff) << 16);
+        int a = static_cast<unsigned int>(x & 0xff);
+        int b = static_cast<unsigned int>((y & 0xff) << 8);
+        int c = static_cast<unsigned int>((z & 0xff) << 16);
         long int key = a + b + c;
 
+        // Thomas Wang's hash
         key += ~(key << 15);
         key ^= (key >> 10);
         key += (key << 3);

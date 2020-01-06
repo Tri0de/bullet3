@@ -36,7 +36,7 @@ btVoxelCollisionAlgorithm::btVoxelCollisionAlgorithm(const btCollisionAlgorithmC
 
 	const btVoxelShape* voxelShape = static_cast<const btVoxelShape*>(colObjWrap->getCollisionShape());
 
-	m_voxelCollisionInfo.reserve(10);
+	m_voxelCollisionInfo.reserve(30);
 }
 
 btVoxelCollisionAlgorithm::~btVoxelCollisionAlgorithm()
@@ -124,58 +124,62 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 		else
 		{
 			contentProvider->getVoxel(info.position.x, info.position.y, info.position.z, childInfo);
-			if (info.algorithm != nullptr && (childInfo.m_collisionShape->getShapeType() != info.shapeType || !childInfo.m_blocking)) {
-                btCollisionAlgorithm* algo = info.algorithm;
-                info.algorithm = nullptr;
-                algo->~btCollisionAlgorithm();
-                m_dispatcher->freeCollisionAlgorithm(algo);
-            }
-			if (childInfo.m_blocking)
+			if(childInfo.m_collisionShape != nullptr)
 			{
-                btCollisionObjectWrapper voxelWrap(colObjWrap, childInfo.m_collisionShape, colObjWrap->getCollisionObject(),
-                                                voxelTranform, -1, -1);
-				if (info.algorithm == nullptr)
+				if (info.algorithm != nullptr && (childInfo.m_collisionShape->getShapeType() != info.shapeType || !childInfo.m_blocking))
 				{
-					info.algorithm = m_dispatcher->findAlgorithm(&voxelWrap, otherObjWrap, m_sharedManifold,
-																 BT_CLOSEST_POINT_ALGORITHMS);
-					info.shapeType = childInfo.m_collisionShape->getShapeType();
-					info.voxelTypeId = childInfo.m_voxelTypeId;
+					btCollisionAlgorithm* algo = info.algorithm;
+					info.algorithm = nullptr;
+					algo->~btCollisionAlgorithm();
+					m_dispatcher->freeCollisionAlgorithm(algo);
 				}
+				if (childInfo.m_blocking)
+				{
+					btCollisionObjectWrapper voxelWrap(colObjWrap, childInfo.m_collisionShape, colObjWrap->getCollisionObject(),
+													   voxelTranform, -1, -1);
+					if (info.algorithm == nullptr)
+					{
+						info.algorithm = m_dispatcher->findAlgorithm(&voxelWrap, otherObjWrap, m_sharedManifold,
+																	 BT_CONTACT_POINT_ALGORITHMS);
+						info.shapeType = childInfo.m_collisionShape->getShapeType();
+						info.voxelTypeId = childInfo.m_voxelTypeId;
+					}
 
-				voxelTranform.setIdentity();
-				voxelTranform.setOrigin(btVector3(info.position.x * scale.x() + childInfo.m_collisionOffset.x(),
-												  info.position.y * scale.y() + childInfo.m_collisionOffset.y(),
-												  info.position.z * scale.z() + childInfo.m_collisionOffset.z()));
-				btCollisionObject* tmpCollision = const_cast<btCollisionObject*>(colObjWrap->getCollisionObject());
-				tmpCollision->setFriction(childInfo.m_friction);
-				tmpCollision->setRestitution(childInfo.m_restitution);
-				tmpCollision->setRollingFriction(childInfo.m_rollingFriction);
-				tmpCollision->setVoxelPosition(info.position);
+					voxelTranform.setIdentity();
+					voxelTranform.setOrigin(btVector3(info.position.x * scale.x() + childInfo.m_collisionOffset.x(),
+													  info.position.y * scale.y() + childInfo.m_collisionOffset.y(),
+													  info.position.z * scale.z() + childInfo.m_collisionOffset.z()));
+					btCollisionObject* tmpCollision = const_cast<btCollisionObject*>(colObjWrap->getCollisionObject());
+					tmpCollision->setFriction(childInfo.m_friction);
+					tmpCollision->setRestitution(childInfo.m_restitution);
+					tmpCollision->setRollingFriction(childInfo.m_rollingFriction);
+					tmpCollision->setVoxelPosition(info.position);
 
-                const btCollisionObjectWrapper* tmpWrap = nullptr;
-                if (resultOut->getBody0Internal() == colObjWrap->getCollisionObject())
-                {
-                    tmpWrap = resultOut->getBody0Wrap();
-                    resultOut->setBody0Wrap(&voxelWrap);
-                    resultOut->setShapeIdentifiersA(-1, i);
-                }
-                else
-                {
-                    tmpWrap = resultOut->getBody1Wrap();
-                    resultOut->setBody1Wrap(&voxelWrap);
-                    resultOut->setShapeIdentifiersB(-1, i);
-                }
+					const btCollisionObjectWrapper* tmpWrap = nullptr;
+					if (resultOut->getBody0Internal() == colObjWrap->getCollisionObject())
+					{
+						tmpWrap = resultOut->getBody0Wrap();
+						resultOut->setBody0Wrap(&voxelWrap);
+						resultOut->setShapeIdentifiersA(-1, i);
+					}
+					else
+					{
+						tmpWrap = resultOut->getBody1Wrap();
+						resultOut->setBody1Wrap(&voxelWrap);
+						resultOut->setShapeIdentifiersB(-1, i);
+					}
 
-                info.algorithm->processCollision(&voxelWrap, otherObjWrap, dispatchInfo, resultOut);
+					info.algorithm->processCollision(&voxelWrap, otherObjWrap, dispatchInfo, resultOut);
 
-                if (resultOut->getBody0Internal() == colObjWrap->getCollisionObject())
-                {
-                    resultOut->setBody0Wrap(tmpWrap);
-                }
-                else
-                {
-                    resultOut->setBody1Wrap(tmpWrap);
-                }
+					if (resultOut->getBody0Internal() == colObjWrap->getCollisionObject())
+					{
+						resultOut->setBody0Wrap(tmpWrap);
+					}
+					else
+					{
+						resultOut->setBody1Wrap(tmpWrap);
+					}
+				}
 			}
 
 			++i;
