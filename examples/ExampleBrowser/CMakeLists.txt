@@ -109,6 +109,8 @@ SET(App_ExampleBrowser_SRCS
   ../VoronoiFracture/VoronoiFractureDemo.h
   ../VoronoiFracture/btConvexConvexMprAlgorithm.cpp
   ../VoronoiFracture/btConvexConvexMprAlgorithm.h
+  ../VoxelDemo/VoxelDemo.cpp
+  ../VoxelDemo/VoxelDemo.h
   ../Vehicles/Hinge2Vehicle.cpp
   ../Vehicles/Hinge2Vehicle.h
   ../MultiBody/TestJointTorqueSetup.cpp
