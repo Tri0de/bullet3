@@ -87,9 +87,12 @@ void VoxelDemo::initPhysics()
 
 	btVoxelContentProvider* provider = new VoxelWorld();
 
-	btVoxelShape* voxelWorld = new btVoxelShape(provider, btVector3(-BT_LARGE_FLOAT, -BT_LARGE_FLOAT, -BT_LARGE_FLOAT), btVector3(BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT));
+    btVector3 aabbMin = btVector3(-BT_LARGE_FLOAT, -BT_LARGE_FLOAT, -BT_LARGE_FLOAT);
+    btVector3 aabbMax = btVector3(BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT);
+
+	btVoxelShape* voxelWorld = new btVoxelShape(provider, aabbMin, aabbMax);
 	voxelWorld->setLocalScaling(btVector3(0.5, 0.5, 0.5));
-		
+
 
 	//groundShape->initializePolyhedralFeatures();
 //	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),50);
