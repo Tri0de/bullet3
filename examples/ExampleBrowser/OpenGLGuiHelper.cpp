@@ -1,3 +1,4 @@
+#include <BulletCollision/CollisionShapes/btVoxelShape.h>
 #include "OpenGLGuiHelper.h"
 
 #include "btBulletDynamicsCommon.h"
@@ -11,7 +12,8 @@
 #include "../OpenGLWindow/GLInstanceGraphicsShape.h"
 //backwards compatibility
 #include "GL_ShapeDrawer.h"
-
+#include <map>
+#include <tuple>
 
 #define BT_LINE_BATCH_SIZE 512
 
@@ -416,6 +418,23 @@ static void createCollisionShapeGraphicsObjectInternal(btCollisionShape* collisi
 				}
 				else if (collisionShape->isVoxel()) {
 					// Probably can't do anything here, but isn't an error
+					// INSERT RENDERING CODE HERE
+					btVoxelShape* voxelShape = (btVoxelShape*) collisionShape;
+                    btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
+
+					for (auto it = contentProvider->begin(); it != contentProvider->end(); it++) {
+                        std::tuple<int, int, int> blockPos = it->first;
+                        bool contains = it->second;
+                        if (contains) {
+                            // Add a block to render at "blockPos"
+                            btBoxShape* renderShape = new btBoxShape(btVector3(.5, .5, .5));
+                            btTransform renderTransform = parentTransform;
+                            btVector3 renderOrigin(parentTransform.getOrigin().x() + std::get<0>(blockPos), parentTransform.getOrigin().x() + std::get<1>(blockPos), parentTransform.getOrigin().x() + std::get<2>(blockPos));
+                            renderTransform.setOrigin(renderOrigin);
+
+                            createCollisionShapeGraphicsObjectInternal(renderShape, renderTransform, verticesOut, indicesOut);
+                        }
+					}
 				}
 				else
 				{

@@ -16,6 +16,8 @@ subject to the following restrictions:
 #ifndef BT_VOXEL_SHAPE_H
 #define BT_VOXEL_SHAPE_H
 
+#include <tuple>
+#include <map>
 #include "btCollisionShape.h"
 
 #include "LinearMath/btVector3.h"
@@ -82,6 +84,9 @@ struct btVoxelContentProvider
 	
 	virtual btVoxelInfo getVoxel(int x, int y, int z) const = 0;
 
+	virtual std::map<std::tuple<int, int, int>, bool>::iterator begin() = 0;
+
+    virtual std::map<std::tuple<int, int, int>, bool>::iterator end() = 0;
 };
 
 /// The btVoxelShape is a three dimensional grid of arbitrary size, with each cell containing a voxel. The contents of each cell is delegated to a

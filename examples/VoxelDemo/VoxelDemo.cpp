@@ -18,10 +18,12 @@ subject to the following restrictions:
 #include "VoxelDemo.h"
 
 #include "btBulletDynamicsCommon.h"
-#define ARRAY_SIZE_Y 5
-#define ARRAY_SIZE_X 5
-#define ARRAY_SIZE_Z 5
+#define ARRAY_SIZE_Y 1
+#define ARRAY_SIZE_X 1
+#define ARRAY_SIZE_Z 1
 
+#include <tuple>
+#include <map>
 #include "LinearMath/btVector3.h"
 #include "LinearMath/btAlignedObjectArray.h"
 #include "BulletCollision/CollisionShapes/btVoxelShape.h"
@@ -53,24 +55,43 @@ struct VoxelWorld : public btVoxelContentProvider
 	btVoxelInfo emptyInfo;
 	btVoxelInfo filledInfo;
 
+    std::map<std::tuple<int, int, int>, bool> blocksMap;
+
 	VoxelWorld() {
 		emptyInfo.m_blocking = false;
 		emptyInfo.m_tracable = false;
 		filledInfo.m_blocking = true;
 		filledInfo.m_voxelTypeId = 1;
 		filledInfo.m_tracable = true;
-		filledInfo.m_collisionShape = new btBoxShape((btVector3(btScalar(.25), btScalar(.25), btScalar(0.25))));
+		filledInfo.m_collisionShape = new btBoxShape((btVector3(btScalar(.5), btScalar(.5), btScalar(.5))));
 		filledInfo.m_friction = 0.7;
 		filledInfo.m_restitution = 0.5;
 		filledInfo.m_rollingFriction = 0.7;
 		filledInfo.m_collisionOffset = btVector3(0, 0, 0);
+
+		int range = 15;
+		for (int x = -range; x <= range; x++) {
+		    for (int z = -range; z <= range; z++) {
+		        int height = 0; // abs(x) + abs(z)
+		        std::tuple<int, int, int> blockPos(x, height, z);
+		        blocksMap[blockPos] = true;
+		    }
+		}
 	}
 
-	btVoxelInfo getVoxel(int x, int y, int z) const {
-		if (y > 0 || abs(x) > 5 || abs(z) > 5) {
-			return emptyInfo;
-		}
-		return filledInfo;
+	btVoxelInfo getVoxel(int x, int y, int z) const override {
+	    if (blocksMap.find(std::tuple<int, int, int>(x, y, z)) != blocksMap.end()) {
+            return filledInfo;
+	    }
+		return emptyInfo;
+	}
+
+    std::map<std::tuple<int, int, int>, bool>::iterator begin() override {
+	    return blocksMap.begin();
+	}
+
+    std::map<std::tuple<int, int, int>, bool>::iterator end() override {
+	    return blocksMap.end();
 	}
 };
 
@@ -91,7 +112,7 @@ void VoxelDemo::initPhysics()
     btVector3 aabbMax = btVector3(BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT);
 
 	btVoxelShape* voxelWorld = new btVoxelShape(provider, aabbMin, aabbMax);
-	voxelWorld->setLocalScaling(btVector3(0.5, 0.5, 0.5));
+	// voxelWorld->setLocalScaling(btVector3(0.5, 0.5, 0.5));
 
 
 	//groundShape->initializePolyhedralFeatures();
