@@ -427,12 +427,12 @@ static void createCollisionShapeGraphicsObjectInternal(btCollisionShape* collisi
                         bool contains = it->second;
                         if (contains) {
                             // Add a block to render at "blockPos"
-                            btBoxShape* renderShape = new btBoxShape(btVector3(.5, .5, .5));
+                            btBoxShape renderShape(btVector3(.5, .5, .5));
                             btTransform renderTransform = parentTransform;
                             btVector3 renderOrigin(parentTransform.getOrigin().x() + std::get<0>(blockPos), parentTransform.getOrigin().x() + std::get<1>(blockPos), parentTransform.getOrigin().x() + std::get<2>(blockPos));
                             renderTransform.setOrigin(renderOrigin);
 
-                            createCollisionShapeGraphicsObjectInternal(renderShape, renderTransform, verticesOut, indicesOut);
+                            createCollisionShapeGraphicsObjectInternal(&renderShape, renderTransform, verticesOut, indicesOut);
                         }
 					}
 				}

@@ -18,9 +18,9 @@ subject to the following restrictions:
 #include "VoxelDemo.h"
 
 #include "btBulletDynamicsCommon.h"
-#define ARRAY_SIZE_Y 1
-#define ARRAY_SIZE_X 1
-#define ARRAY_SIZE_Z 1
+#define ARRAY_SIZE_Y 5
+#define ARRAY_SIZE_X 5
+#define ARRAY_SIZE_Z 5
 
 #include <tuple>
 #include <map>
@@ -72,7 +72,7 @@ struct VoxelWorld : public btVoxelContentProvider
 		int range = 15;
 		for (int x = -range; x <= range; x++) {
 		    for (int z = -range; z <= range; z++) {
-		        int height = 0; // abs(x) + abs(z)
+		        int height = abs(x) + abs(z);
 		        std::tuple<int, int, int> blockPos(x, height, z);
 		        blocksMap[blockPos] = true;
 		    }
@@ -94,6 +94,8 @@ struct VoxelWorld : public btVoxelContentProvider
 	    return blocksMap.end();
 	}
 };
+
+btRigidBody* worldBody;
 
 void VoxelDemo::initPhysics()
 {
@@ -125,7 +127,7 @@ void VoxelDemo::initPhysics()
 	groundTransform.setOrigin(btVector3(0,0,0));
 	{
 		btScalar mass(0.);
-		createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
+		worldBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
 	}
 
 
@@ -179,6 +181,14 @@ void VoxelDemo::initPhysics()
 
 void VoxelDemo::renderScene()
 {
+    btQuaternion initialRotation = worldBody->getWorldTransform().getRotation();
+    btQuaternion rotChange;
+    rotChange.setRotation(btVector3(0, 1, 0), .01);
+    btQuaternion finalRotation = initialRotation * rotChange;
+
+    btTransform newTransform = worldBody->getWorldTransform();
+    newTransform.setRotation(finalRotation);
+    worldBody->setWorldTransform(newTransform);
 	CommonRigidBodyBase::renderScene();
 	
 }
