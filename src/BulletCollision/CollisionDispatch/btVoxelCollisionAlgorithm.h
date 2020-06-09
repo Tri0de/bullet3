@@ -91,6 +91,24 @@ ATTRIBUTE_ALIGNED16(struct) btVector3i {
     }
 };
 
+// Used to make btVector3i compatible with unordered_set
+struct btVector3iHasher
+{
+    size_t operator()(const btVector3i & obj) const
+    {
+        return obj.getHash();
+    }
+};
+
+// Used to make btVector3i compatible with unordered_set
+struct btVector3iComparator
+{
+    bool operator()(const btVector3i & obj1, const btVector3i & obj2) const
+    {
+        return obj1.equals(obj2);
+    }
+};
+
 ATTRIBUTE_ALIGNED16(struct) btVoxelCollisionInfo
 {
 	BT_DECLARE_ALIGNED_ALLOCATOR();

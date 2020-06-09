@@ -28,6 +28,8 @@ subject to the following restrictions:
 
 #include "../CommonInterfaces/CommonRigidBodyBase.h"
 
+#include<unordered_set >
+
 
 struct VoxelDemo : public CommonRigidBodyBase
 {
@@ -50,22 +52,35 @@ struct VoxelDemo : public CommonRigidBodyBase
 
 struct VoxelWorld : public btVoxelContentProvider
 {
+    std::unordered_set<btVector3i, btVector3iHasher, btVector3iComparator> setOfBlocks;
+
 	VoxelWorld() {
+	    int radius = 10;
+	    for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                int y = 0;
+                btVector3i blockPos(x, y, z);
+                setOfBlocks.insert(blockPos);
+            }
+	    }
 	}
 
 	void getVoxel(int x, int y, int z,btVoxelInfo& info) const {
-		if (y > 0 || abs(x) > 5 || abs(z) > 5) {
-			info.m_blocking = false;
+	    btVector3i blockPos(x, y, z);
+
+	    if (setOfBlocks.count(blockPos) == 1) {
+            info.m_blocking = true;
+            info.m_voxelTypeId = 1;
+            info.m_tracable = true;
+            info.m_collisionShape = new btBoxShape((btVector3(btScalar(.25), btScalar(.25), btScalar(0.25))));
+            info.m_friction = 0.7;
+            info.m_restitution = 0.5;
+            info.m_rollingFriction = 0.7;
+            info.m_collisionOffset = btVector3(0, 0, 0);
+	    } else {
+            info.m_blocking = false;
             info.m_tracable = false;
-		}
-        info.m_blocking = true;
-        info.m_voxelTypeId = 1;
-        info.m_tracable = true;
-        info.m_collisionShape = new btBoxShape((btVector3(btScalar(.25), btScalar(.25), btScalar(0.25))));
-        info.m_friction = 0.7;
-        info.m_restitution = 0.5;
-        info.m_rollingFriction = 0.7;
-        info.m_collisionOffset = btVector3(0, 0, 0);
+	    }
 	}
 };
 
