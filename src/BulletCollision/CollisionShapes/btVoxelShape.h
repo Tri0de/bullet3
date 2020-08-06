@@ -16,6 +16,10 @@ subject to the following restrictions:
 #ifndef BT_VOXEL_SHAPE_H
 #define BT_VOXEL_SHAPE_H
 
+#include <map>
+#include <tuple>
+#include <BulletCollision/CollisionDispatch/btVoxelCollisionAlgorithm.h>
+#include <unordered_set>
 #include "btCollisionShape.h"
 
 #include "LinearMath/btVector3.h"
@@ -107,7 +111,10 @@ struct btVoxelContentProvider
 {
 	virtual ~btVoxelContentProvider() {}
 	virtual void getVoxel(int x, int y, int z,btVoxelInfo&) const = 0;
-
+	// Used to iterate over all BlockPos in this voxel shape
+	// Should only ever be used for rendering in demos
+	virtual std::unordered_set<btVector3i>::iterator begin() const = 0;
+	virtual std::unordered_set<btVector3i>::iterator end() const = 0;
 };
 
 /// The btVoxelShape is a three dimensional grid of arbitrary size, with each cell containing a voxel. The contents of each cell is delegated to a

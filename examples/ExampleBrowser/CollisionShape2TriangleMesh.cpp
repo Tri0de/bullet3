@@ -214,7 +214,31 @@ void CollisionShape2TriangleMesh(btCollisionShape* collisionShape, const btTrans
 					}
 					if(collisionShape->isVoxel())
 					{
-						// Probably can't do anything here, but isn't an error
+						// This adds the voxel world to the example renderer
+						const auto* const voxelShape = (btVoxelShape*) collisionShape;
+						const auto scalingVector = voxelShape->getLocalScaling();
+						const btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
+
+						// The render shape of each voxel, for now just render each one as a cube
+						auto* const renderShape = new btBoxShape(btVector3(scalingVector.x() / 2, scalingVector.y() / 2, scalingVector.z() / 2));
+
+                        for (auto it = contentProvider->begin(); it != contentProvider->end(); it++) {
+                            const btVector3i blockPos = *it;
+							// Add a block to render at "blockPos"
+
+							btTransform blockTransform;
+							blockTransform.getBasis().setIdentity();
+							blockTransform.getOrigin().setValue((float) blockPos.x * scalingVector.x(),
+																(float) blockPos.y * scalingVector.y(),
+																(float) blockPos.z * scalingVector.z());
+
+							btTransform netTransform = parentTransform * blockTransform;
+
+							CollisionShape2TriangleMesh(renderShape, netTransform, vertexPositions, vertexNormals, indicesOut);
+                        }
+
+                        // Cleanup memory
+                        delete renderShape;
 					}
 					else
 					{

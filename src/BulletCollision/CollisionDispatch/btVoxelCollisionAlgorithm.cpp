@@ -60,10 +60,17 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 	btAssert(colObjWrap->getCollisionShape()->isVoxel());
 	const btVoxelShape* voxelShape = static_cast<const btVoxelShape*>(colObjWrap->getCollisionShape());
 
+	btTransform voxelWorldTransform = colObjWrap->getWorldTransform();
+	btTransform inverseVoxelWorldTransform = voxelWorldTransform.inverse();
+
 	btTransform otherTransform = otherObjWrap->getWorldTransform();
+
+	// This doesn't work when voxelWorldTransform is anything but the default transform (no rotation, origin 0,0,0)
+	// NEED TO FIX THIS!!!
+
 	btVector3 aabbMin;
 	btVector3 aabbMax;
-	otherObjWrap->getCollisionShape()->getAabb(otherTransform, aabbMin, aabbMax);
+	otherObjWrap->getCollisionShape()->getAabb(otherTransform * inverseVoxelWorldTransform, aabbMin, aabbMax);
 
 	btVector3 scale = voxelShape->getLocalScaling();
 	btVector3i regionMin(static_cast <int> (floor(aabbMin.x() / scale.x() + .5)),
@@ -104,6 +111,8 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 	while (i < numChildren)
 	{
 		btVoxelCollisionInfo& info = m_voxelCollisionInfo[i];
+
+		// If we're outside of the region, delete info.
 		if (info.position.x < regionMin.x || info.position.x > regionMax.x ||
 			info.position.y < regionMin.y || info.position.y > regionMax.y ||
 			info.position.z < regionMin.z || info.position.z > regionMax.z)
@@ -135,6 +144,13 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 				}
 				if (childInfo.m_blocking)
 				{
+					voxelTranform.setIdentity();
+					voxelTranform.setOrigin(btVector3(info.position.x * scale.x() + childInfo.m_collisionOffset.x(),
+													  info.position.y * scale.y() + childInfo.m_collisionOffset.y(),
+													  info.position.z * scale.z() + childInfo.m_collisionOffset.z()));
+
+					// voxelTranform = voxelWorldTransform * voxelTranform;
+
 					btCollisionObjectWrapper voxelWrap(colObjWrap, childInfo.m_collisionShape, colObjWrap->getCollisionObject(),
 													   voxelTranform, -1, -1);
 					if (info.algorithm == nullptr)
@@ -145,10 +161,7 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 						info.voxelTypeId = childInfo.m_voxelTypeId;
 					}
 
-					voxelTranform.setIdentity();
-					voxelTranform.setOrigin(btVector3(info.position.x * scale.x() + childInfo.m_collisionOffset.x(),
-													  info.position.y * scale.y() + childInfo.m_collisionOffset.y(),
-													  info.position.z * scale.z() + childInfo.m_collisionOffset.z()));
+
 					btCollisionObject* tmpCollision = const_cast<btCollisionObject*>(colObjWrap->getCollisionObject());
 					tmpCollision->setFriction(childInfo.m_friction);
 					tmpCollision->setRestitution(childInfo.m_restitution);

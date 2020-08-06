@@ -22,10 +22,6 @@ subject to the following restrictions:
 #define ARRAY_SIZE_X 5
 #define ARRAY_SIZE_Z 5
 
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btAlignedObjectArray.h"
-#include "BulletCollision/CollisionShapes/btVoxelShape.h"
-
 #include "../CommonInterfaces/CommonRigidBodyBase.h"
 
 #include<unordered_set >
@@ -42,10 +38,10 @@ struct VoxelDemo : public CommonRigidBodyBase
 	virtual void renderScene();
 	void resetCamera()
 	{
-		float dist = 41;
-		float pitch = 52;
-		float yaw = 35;
-		float targetPos[3]={0,0.46,0};
+		float dist = 20;
+		float pitch = -45;
+		float yaw = 45;
+		float targetPos[3]={0,0.5,0};
 		m_guiHelper->resetCamera(dist,pitch,yaw,targetPos[0],targetPos[1],targetPos[2]);
 	}
 };
@@ -53,6 +49,9 @@ struct VoxelDemo : public CommonRigidBodyBase
 struct VoxelWorld : public btVoxelContentProvider
 {
     std::unordered_set<btVector3i, btVector3iHasher, btVector3iComparator> setOfBlocks;
+    // This is only correct assuming scaling is <1,1,1>
+    // Should always be equal to scaling / 2
+    btBoxShape* typicalBox = new btBoxShape((btVector3(btScalar(.5), btScalar(.5), btScalar(.5))));
 
 	VoxelWorld() {
 	    int radius = 10;
@@ -65,14 +64,14 @@ struct VoxelWorld : public btVoxelContentProvider
 	    }
 	}
 
-	void getVoxel(int x, int y, int z,btVoxelInfo& info) const {
+	void getVoxel(int x, int y, int z,btVoxelInfo& info) const override {
 	    btVector3i blockPos(x, y, z);
 
 	    if (setOfBlocks.count(blockPos) == 1) {
             info.m_blocking = true;
             info.m_voxelTypeId = 1;
             info.m_tracable = true;
-            info.m_collisionShape = new btBoxShape((btVector3(btScalar(.25), btScalar(.25), btScalar(0.25))));
+            info.m_collisionShape = typicalBox;
             info.m_friction = 0.7;
             info.m_restitution = 0.5;
             info.m_rollingFriction = 0.7;
@@ -81,6 +80,14 @@ struct VoxelWorld : public btVoxelContentProvider
             info.m_blocking = false;
             info.m_tracable = false;
 	    }
+	}
+
+	std::unordered_set<btVector3i>::iterator begin() const override {
+		return setOfBlocks.begin();
+	}
+
+	std::unordered_set<btVector3i>::iterator end() const override {
+		return setOfBlocks.end();
 	}
 };
 
@@ -97,8 +104,10 @@ void VoxelDemo::initPhysics()
 
 	btVoxelContentProvider* provider = new VoxelWorld();
 
-	btVoxelShape* voxelWorld = new btVoxelShape(provider, btVector3(-BT_LARGE_FLOAT, -BT_LARGE_FLOAT, -BT_LARGE_FLOAT), btVector3(BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT));
-	voxelWorld->setLocalScaling(btVector3(0.5, 0.5, 0.5));
+	auto* voxelWorld = new btVoxelShape(provider, btVector3(-BT_LARGE_FLOAT, -BT_LARGE_FLOAT, -BT_LARGE_FLOAT), btVector3(BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT));
+
+	// For now, just don't support scaling
+	// voxelWorld->setLocalScaling(btVector3(0.5, 0.5, 0.5));
 		
 
 	//groundShape->initializePolyhedralFeatures();
@@ -106,12 +115,18 @@ void VoxelDemo::initPhysics()
 	
 	m_collisionShapes.push_back(voxelWorld);
 
+	btVector3 rotationAxis(1, 0, 0);
+	float rotationAngle = 0;
+	btQuaternion rotationQuaternion(rotationAxis, rotationAngle);
+
+	// For now, the ground transform is just the origin no rotation transform. Must btVoxelCollisionAlgorithm to support
+	// cooler transforms.
 	btTransform groundTransform;
-	groundTransform.setIdentity();
+	groundTransform.setRotation(rotationQuaternion);
 	groundTransform.setOrigin(btVector3(0,0,0));
 	{
 		btScalar mass(0.);
-		createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
+		auto* groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
 	}
 
 
