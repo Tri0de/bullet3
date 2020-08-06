@@ -65,12 +65,11 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 
 	btTransform otherTransform = otherObjWrap->getWorldTransform();
 
-	// This doesn't work when voxelWorldTransform is anything but the default transform (no rotation, origin 0,0,0)
-	// NEED TO FIX THIS!!!
-
 	btVector3 aabbMin;
 	btVector3 aabbMax;
-	otherObjWrap->getCollisionShape()->getAabb(otherTransform * inverseVoxelWorldTransform, aabbMin, aabbMax);
+
+	// When creating the AABB to check, first put the object in voxel world space, then create the AABB
+	otherObjWrap->getCollisionShape()->getAabb(inverseVoxelWorldTransform * otherTransform, aabbMin, aabbMax);
 
 	btVector3 scale = voxelShape->getLocalScaling();
 	btVector3i regionMin(static_cast <int> (floor(aabbMin.x() / scale.x() + .5)),
@@ -106,7 +105,6 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 	btVoxelInfo childInfo;
 	numChildren = m_voxelCollisionInfo.size();
 	btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
-	btTransform voxelTranform;
 
 	while (i < numChildren)
 	{
@@ -144,12 +142,15 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 				}
 				if (childInfo.m_blocking)
 				{
+					btTransform voxelTranform;
+
 					voxelTranform.setIdentity();
 					voxelTranform.setOrigin(btVector3(info.position.x * scale.x() + childInfo.m_collisionOffset.x(),
 													  info.position.y * scale.y() + childInfo.m_collisionOffset.y(),
 													  info.position.z * scale.z() + childInfo.m_collisionOffset.z()));
 
-					// voxelTranform = voxelWorldTransform * voxelTranform;
+					// The transform for the individual voxel shape is its own local transform, followed by the voxel world transform.
+					voxelTranform = voxelWorldTransform * voxelTranform;
 
 					btCollisionObjectWrapper voxelWrap(colObjWrap, childInfo.m_collisionShape, colObjWrap->getCollisionObject(),
 													   voxelTranform, -1, -1);

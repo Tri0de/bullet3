@@ -26,6 +26,8 @@ subject to the following restrictions:
 
 #include<unordered_set >
 
+// Bad style, but I need to get a reference to the ground object somehow.
+btRigidBody* groundRigidBody = nullptr;
 
 struct VoxelDemo : public CommonRigidBodyBase
 {
@@ -44,6 +46,26 @@ struct VoxelDemo : public CommonRigidBodyBase
 		float targetPos[3]={0,0.5,0};
 		m_guiHelper->resetCamera(dist,pitch,yaw,targetPos[0],targetPos[1],targetPos[2]);
 	}
+
+	void stepSimulation(float deltaTime) override
+	{
+		if (m_dynamicsWorld)
+		{
+			// Before phys ticking, rotate the ground slightly
+			btTransform groundBodyTransform = groundRigidBody->getWorldTransform();
+
+			btTransform deltaTransform;
+			deltaTransform.setOrigin(btVector3(0,0,0));
+			deltaTransform.setRotation(btQuaternion(btVector3(0, 1, 1).normalize(), deltaTime * 1));
+
+			// Delta transform will rotate us slightly
+			groundBodyTransform = groundBodyTransform * deltaTransform;
+			groundRigidBody->setWorldTransform(groundBodyTransform);
+
+			// Now run the phys tick
+			m_dynamicsWorld->stepSimulation(deltaTime);
+		}
+	}
 };
 
 struct VoxelWorld : public btVoxelContentProvider
@@ -57,6 +79,10 @@ struct VoxelWorld : public btVoxelContentProvider
 	    int radius = 10;
 	    for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
+            	// Make a checkerboard pattern in the voxel world
+            	if ((x + z) % 2 == 0) {
+					continue;
+            	}
                 int y = 0;
                 btVector3i blockPos(x, y, z);
                 setOfBlocks.insert(blockPos);
@@ -116,7 +142,9 @@ void VoxelDemo::initPhysics()
 	m_collisionShapes.push_back(voxelWorld);
 
 	btVector3 rotationAxis(1, 0, 0);
-	float rotationAngle = 0;
+	rotationAxis.normalize();
+
+	float rotationAngle = .5;
 	btQuaternion rotationQuaternion(rotationAxis, rotationAngle);
 
 	// For now, the ground transform is just the origin no rotation transform. Must btVoxelCollisionAlgorithm to support
@@ -126,7 +154,7 @@ void VoxelDemo::initPhysics()
 	groundTransform.setOrigin(btVector3(0,0,0));
 	{
 		btScalar mass(0.);
-		auto* groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
+		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
 	}
 
 
