@@ -51,16 +51,19 @@ struct VoxelDemo : public CommonRigidBodyBase
 	{
 		if (m_dynamicsWorld)
 		{
-			// Before phys ticking, rotate the ground slightly
-			btTransform groundBodyTransform = groundRigidBody->getWorldTransform();
+			// Enabling this makes the ground move
+			if (false) {
+				// Before phys ticking, rotate the ground slightly
+				btTransform groundBodyTransform = groundRigidBody->getWorldTransform();
 
-			btTransform deltaTransform;
-			deltaTransform.setOrigin(btVector3(0,0,0));
-			deltaTransform.setRotation(btQuaternion(btVector3(0, 1, 1).normalize(), deltaTime * 1));
+				btTransform deltaTransform;
+				deltaTransform.setOrigin(btVector3(0, 0, 0));
+				deltaTransform.setRotation(btQuaternion(btVector3(0, 1, 1).normalize(), deltaTime * 1));
 
-			// Delta transform will rotate us slightly
-			groundBodyTransform = groundBodyTransform * deltaTransform;
-			groundRigidBody->setWorldTransform(groundBodyTransform);
+				// Delta transform will rotate us slightly
+				groundBodyTransform = groundBodyTransform * deltaTransform;
+				groundRigidBody->setWorldTransform(groundBodyTransform);
+			}
 
 			// Now run the phys tick
 			m_dynamicsWorld->stepSimulation(deltaTime);
@@ -130,7 +133,7 @@ void VoxelDemo::initPhysics()
 
 	btVoxelContentProvider* provider = new VoxelWorld();
 
-	auto* voxelWorld = new btVoxelShape(provider, btVector3(-BT_LARGE_FLOAT, -BT_LARGE_FLOAT, -BT_LARGE_FLOAT), btVector3(BT_LARGE_FLOAT, BT_LARGE_FLOAT, BT_LARGE_FLOAT));
+	auto* voxelWorld = new btVoxelShape(provider, btVector3(-10.5, -.5, -10.5), btVector3(10.5, .5, 10.5));
 
 	// For now, just don't support scaling
 	// voxelWorld->setLocalScaling(btVector3(0.5, 0.5, 0.5));
@@ -144,7 +147,7 @@ void VoxelDemo::initPhysics()
 	btVector3 rotationAxis(1, 0, 0);
 	rotationAxis.normalize();
 
-	float rotationAngle = .5;
+	float rotationAngle = 0;
 	btQuaternion rotationQuaternion(rotationAxis, rotationAngle);
 
 	// For now, the ground transform is just the origin no rotation transform. Must btVoxelCollisionAlgorithm to support
@@ -155,6 +158,14 @@ void VoxelDemo::initPhysics()
 	{
 		btScalar mass(0.);
 		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
+
+		// Create another voxel world, make this one fall
+		btScalar fallingVoxelWorldMass(10.);
+		btTransform fallingTransform;
+		fallingTransform.setIdentity();
+		fallingTransform.setOrigin(btVector3(0, 20, 0));
+
+		auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
 	}
 
 
