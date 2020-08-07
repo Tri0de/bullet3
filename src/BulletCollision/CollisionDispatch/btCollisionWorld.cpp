@@ -38,6 +38,7 @@ subject to the following restrictions:
 #include "BulletCollision/CollisionShapes/btConvexPolyhedron.h"
 #include "BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h"
 #include "BulletCollision/CollisionDispatch/btVoxelCollisionAlgorithm.h"
+#include "BulletCollision/CollisionDispatch/btVoxelVoxelCollisionAlgorithm.h"
 
 //#define DISABLE_DBVT_COMPOUNDSHAPE_RAYCAST_ACCELERATION
 

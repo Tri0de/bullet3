@@ -33,6 +33,7 @@ struct btCollisionShapeData;
 #include "LinearMath/btAlignedObjectArray.h"
 
 #include "BulletCollision/CollisionDispatch/btVoxelCollisionAlgorithm.h"
+#include "BulletCollision/CollisionDispatch/btVoxelVoxelCollisionAlgorithm.h"
 
 typedef btAlignedObjectArray<class btCollisionObject*> btCollisionObjectArray;
 

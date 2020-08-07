@@ -21,6 +21,7 @@ subject to the following restrictions:
 #include "BulletCollision/CollisionDispatch/btCompoundCollisionAlgorithm.h"
 #include "BulletCollision/CollisionDispatch/btCompoundCompoundCollisionAlgorithm.h"
 #include "BulletCollision/CollisionDispatch/btVoxelCollisionAlgorithm.h"
+#include "BulletCollision/CollisionDispatch/btVoxelVoxelCollisionAlgorithm.h"
 
 #include "BulletCollision/CollisionDispatch/btConvexPlaneCollisionAlgorithm.h"
 #include "BulletCollision/CollisionDispatch/btBoxBoxCollisionAlgorithm.h"
@@ -95,10 +96,13 @@ btDefaultCollisionConfiguration::btDefaultCollisionConfiguration(const btDefault
 	m_planeConvexCF->m_swapped = true;
 	
 	mem = btAlignedAlloc(sizeof(btVoxelCollisionAlgorithm::CreateFunc), 16);
-        m_voxelCreateFunc = new (mem)btVoxelCollisionAlgorithm::CreateFunc;
+	m_voxelCreateFunc = new (mem)btVoxelCollisionAlgorithm::CreateFunc;
 
-        mem = btAlignedAlloc(sizeof(btVoxelCollisionAlgorithm::SwappedCreateFunc), 16);
-        m_swappedVoxelCreateFunc = new (mem)btVoxelCollisionAlgorithm::SwappedCreateFunc;
+	mem = btAlignedAlloc(sizeof(btVoxelCollisionAlgorithm::SwappedCreateFunc), 16);
+	m_swappedVoxelCreateFunc = new (mem)btVoxelCollisionAlgorithm::SwappedCreateFunc;
+
+	mem = btAlignedAlloc(sizeof(btVoxelVoxelCollisionAlgorithm::CreateFunc), 16);
+	m_voxelVoxelCreateFunc = new (mem)btVoxelVoxelCollisionAlgorithm::CreateFunc;
 
 	///calculate maximum element size, big enough to fit any collision algorithm in the memory pool
 	int maxSize = sizeof(btConvexConvexAlgorithm);
@@ -172,6 +176,9 @@ btDefaultCollisionConfiguration::~btDefaultCollisionConfiguration()
 
 	m_swappedVoxelCreateFunc->~btCollisionAlgorithmCreateFunc();
 	btAlignedFree(m_swappedVoxelCreateFunc);
+
+	m_voxelVoxelCreateFunc->~btCollisionAlgorithmCreateFunc();
+	btAlignedFree(m_voxelVoxelCreateFunc);
 
 	m_emptyCreateFunc->~btCollisionAlgorithmCreateFunc();
 	btAlignedFree(m_emptyCreateFunc);
@@ -338,6 +345,11 @@ btCollisionAlgorithmCreateFunc* btDefaultCollisionConfiguration::getCollisionAlg
 	if (btBroadphaseProxy::isCompound(proxyType0) && btBroadphaseProxy::isCompound(proxyType1))
 	{
 		return m_compoundCompoundCreateFunc;
+	}
+
+	if (btBroadphaseProxy::isVoxel(proxyType0) && btBroadphaseProxy::isVoxel(proxyType1))
+	{
+		return m_voxelVoxelCreateFunc;
 	}
 
 	if (btBroadphaseProxy::isVoxel(proxyType0))

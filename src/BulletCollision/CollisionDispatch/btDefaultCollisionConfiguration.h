@@ -78,6 +78,8 @@ protected:
 
 	btCollisionAlgorithmCreateFunc*	m_voxelCreateFunc;
 	btCollisionAlgorithmCreateFunc*	m_swappedVoxelCreateFunc;
+	btCollisionAlgorithmCreateFunc*	m_voxelVoxelCreateFunc;
+
 	
 public:
 	btDefaultCollisionConfiguration(const btDefaultCollisionConstructionInfo& constructionInfo = btDefaultCollisionConstructionInfo());

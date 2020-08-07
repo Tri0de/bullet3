@@ -39,6 +39,7 @@ SET(BulletCollision_SRCS
 	CollisionDispatch/btUnionFind.cpp
 	CollisionDispatch/SphereTriangleDetector.cpp
 	CollisionDispatch/btVoxelCollisionAlgorithm.cpp
+	CollisionDispatch/btVoxelVoxelCollisionAlgorithm.cpp
 	CollisionShapes/btBoxShape.cpp
 	CollisionShapes/btBox2dShape.cpp
 	CollisionShapes/btBvhTriangleMeshShape.cpp
@@ -151,6 +152,7 @@ SET(CollisionDispatch_HDRS
 	CollisionDispatch/btUnionFind.h
 	CollisionDispatch/SphereTriangleDetector.h
 	CollisionDispatch/btVoxelCollisionAlgorithm.h
+	CollisionDispatch/btVoxelVoxelCollisionAlgorithm.h
 )
 SET(CollisionShapes_HDRS
 	CollisionShapes/btBoxShape.h
