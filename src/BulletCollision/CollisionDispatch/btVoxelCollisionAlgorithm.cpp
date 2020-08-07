@@ -73,11 +73,11 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 
 	btVector3 scale = voxelShape->getLocalScaling();
 	btVector3i regionMin(static_cast <int> (floor(aabbMin.x() / scale.x() + .5)),
-                             static_cast <int> (floor(aabbMin.y() / scale.y() + .5)),
-                             static_cast <int> (floor(aabbMin.z() / scale.z() + .5)));
-    btVector3i regionMax(static_cast <int> (floor(aabbMax.x() / scale.x() + .5)),
-                         static_cast <int> (floor(aabbMax.y() / scale.y() + .5)),
-                         static_cast <int> (floor(aabbMax.z() / scale.z() + .5)));
+							 static_cast <int> (floor(aabbMin.y() / scale.y() + .5)),
+							 static_cast <int> (floor(aabbMin.z() / scale.z() + .5)));
+	btVector3i regionMax(static_cast <int> (floor(aabbMax.x() / scale.x() + .5)),
+							 static_cast <int> (floor(aabbMax.y() / scale.y() + .5)),
+							 static_cast <int> (floor(aabbMax.z() / scale.z() + .5)));
 	// Remove out of bounds collision info
 	int i = 0;
 	int numChildren = 0;

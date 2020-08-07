@@ -70,42 +70,42 @@ struct VoxelDemo : public CommonRigidBodyBase
 
 struct VoxelWorld : public btVoxelContentProvider
 {
-    std::unordered_set<btVector3i, btVector3iHasher, btVector3iComparator> setOfBlocks;
-    // This is only correct assuming scaling is <1,1,1>
-    // Should always be equal to scaling / 2
-    btBoxShape* typicalBox = new btBoxShape((btVector3(btScalar(.5), btScalar(.5), btScalar(.5))));
+	std::unordered_set<btVector3i, btVector3iHasher, btVector3iComparator> setOfBlocks;
+	// This is only correct assuming scaling is <1,1,1>
+	// Should always be equal to scaling / 2
+	btBoxShape* typicalBox = new btBoxShape((btVector3(btScalar(.5), btScalar(.5), btScalar(.5))));
 
 	VoxelWorld() {
-	    int radius = 10;
-	    for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-            	// Make a checkerboard pattern in the voxel world
-            	if ((x + z) % 2 == 0) {
+		int radius = 10;
+		for (int x = -radius; x <= radius; x++) {
+			for (int z = -radius; z <= radius; z++) {
+				// Make a checkerboard pattern in the voxel world
+				if ((x + z) % 2 == 0) {
 					continue;
-            	}
-                int y = 0;
-                btVector3i blockPos(x, y, z);
-                setOfBlocks.insert(blockPos);
-            }
-	    }
+				}
+				int y = 0;
+				btVector3i blockPos(x, y, z);
+				setOfBlocks.insert(blockPos);
+			}
+		}
 	}
 
 	void getVoxel(int x, int y, int z,btVoxelInfo& info) const override {
-	    btVector3i blockPos(x, y, z);
+		btVector3i blockPos(x, y, z);
 
-	    if (setOfBlocks.count(blockPos) == 1) {
-            info.m_blocking = true;
-            info.m_voxelTypeId = 1;
-            info.m_tracable = true;
-            info.m_collisionShape = typicalBox;
-            info.m_friction = 0.7;
-            info.m_restitution = 0.5;
-            info.m_rollingFriction = 0.7;
-            info.m_collisionOffset = btVector3(0, 0, 0);
-	    } else {
-            info.m_blocking = false;
-            info.m_tracable = false;
-	    }
+		if (setOfBlocks.count(blockPos) == 1) {
+			info.m_blocking = true;
+			info.m_voxelTypeId = 1;
+			info.m_tracable = true;
+			info.m_collisionShape = typicalBox;
+			info.m_friction = 0.7;
+			info.m_restitution = 0.5;
+			info.m_rollingFriction = 0.7;
+			info.m_collisionOffset = btVector3(0, 0, 0);
+		} else {
+			info.m_blocking = false;
+			info.m_tracable = false;
+		}
 	}
 
 	std::unordered_set<btVector3i>::iterator begin() const override {
@@ -218,7 +218,7 @@ void VoxelDemo::renderScene()
 
 
 
-CommonExampleInterface*    VoxelDemoCreateFunc(CommonExampleOptions& options)
+CommonExampleInterface*	VoxelDemoCreateFunc(CommonExampleOptions& options)
 {
 	return new VoxelDemo(options.m_guiHelper);
 }
