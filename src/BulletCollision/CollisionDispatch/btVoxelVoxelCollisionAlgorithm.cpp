@@ -15,6 +15,7 @@ subject to the following restrictions:
 */
 
 #include <limits.h>
+#include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include "BulletCollision/CollisionDispatch/btVoxelVoxelCollisionAlgorithm.h"
 #include "BulletCollision/CollisionDispatch/btCollisionObject.h"
 #include "BulletCollision/CollisionShapes/btVoxelShape.h"
@@ -23,9 +24,11 @@ subject to the following restrictions:
 #include "LinearMath/btAabbUtil2.h"
 #include "btManifoldResult.h"
 #include "BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h"
+#include "btBoxBoxDetector.h"
 
 btVoxelVoxelCollisionAlgorithm::btVoxelVoxelCollisionAlgorithm(const btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap, bool isSwapped)
 	: btCollisionAlgorithm(ci),
+	  m_ownManifold(false),
 	  m_sharedManifold(ci.m_manifold)
 {
 
@@ -47,6 +50,11 @@ btVoxelVoxelCollisionAlgorithm::~btVoxelVoxelCollisionAlgorithm()
 			m_dispatcher->freeCollisionAlgorithm(m_voxelCollisionInfo[i].algorithm);
 		}
 	}
+	if (m_ownManifold)
+	{
+		if (m_sharedManifold)
+			m_dispatcher->releaseManifold(m_sharedManifold);
+	}
 }
 
 void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut)
@@ -54,9 +62,26 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 	const btCollisionObjectWrapper* colObjWrap = body0Wrap;
 	const btCollisionObjectWrapper* otherObjWrap = body1Wrap;
 
+	// Create the persistent manifold
+	// if (true) { // resultOut->getPersistentManifold() == nullptr) {
+		// btPersistentManifold* persistentManifold = m_dispatcher->getNewManifold(body0Wrap->getCollisionObject(), body1Wrap->getCollisionObject());
+		// resultOut->setPersistentManifold(persistentManifold);
+		// printf("Created a manifold\n");
+	// }
+	if (!m_sharedManifold)
+	{
+		//swapped?
+		m_sharedManifold = m_dispatcher->getNewManifold(body0Wrap->getCollisionObject(), body1Wrap->getCollisionObject());
+		m_ownManifold = true;
+	}
+	if (m_sharedManifold->getNumContacts() != 0) {
+		m_sharedManifold->clearManifold();
+	}
+	resultOut->setPersistentManifold(m_sharedManifold);
+
 	btAssert(colObjWrap->getCollisionShape()->isVoxel());
-	const btVoxelShape* voxelShape = static_cast<const btVoxelShape*>(colObjWrap->getCollisionShape());
-	const btVoxelShape* otherVoxelShape = static_cast<const btVoxelShape*>(otherObjWrap->getCollisionShape());
+	const auto* voxelShape = static_cast<const btVoxelShape*>(colObjWrap->getCollisionShape());
+	const auto* otherVoxelShape = static_cast<const btVoxelShape*>(otherObjWrap->getCollisionShape());
 
 	btTransform inverseOtherTransform = otherObjWrap->getWorldTransform().inverse();
 
@@ -93,12 +118,33 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 		positionInOther = inverseOtherTransform * voxelWorldTransform * positionInOther;
 
 		if (otherVoxelShape->getContentProvider()->isSurfaceOrSet(round(positionInOther.x()), round(positionInOther.y()), round(positionInOther.z()))) {
-			btVoxelCollisionInfo collisionInfo;
-			collisionInfo.position.x = blockPos.x;
-			collisionInfo.position.y = blockPos.y;
-			collisionInfo.position.z = blockPos.z;
-			collisionInfo.algorithm = nullptr;
-			m_voxelCollisionInfo.push_back(collisionInfo);
+
+
+			// First compute the point's position in global
+			btVector3 pointPositionInGlobal(blockPos.x, blockPos.y, blockPos.z);
+			pointPositionInGlobal = voxelWorldTransform * pointPositionInGlobal;
+
+			// Then compute the point's position in the other voxel world space
+			btVector3 pointPositionInOtherLocal = inverseOtherTransform * pointPositionInGlobal;
+
+			// Then compute the force voxel's position in global
+			btVector3 forceVoxelPositionInGlobal(round(pointPositionInOtherLocal.x()), round(pointPositionInOtherLocal.y()), round(pointPositionInOtherLocal.z()));
+			forceVoxelPositionInGlobal = otherTransform * forceVoxelPositionInGlobal;
+
+
+			// For now, just assume the normal is always up
+			btVector3 normal(0, 1, 0);
+
+			// Crappy tangent plane math
+			if (pointPositionInGlobal.y() > forceVoxelPositionInGlobal.y()) {
+				// Do nothing
+			} else {
+				double collisionDepth = pointPositionInGlobal.y() - forceVoxelPositionInGlobal.y();
+				if (abs(collisionDepth) < .1) {
+					int j = 4;
+				}
+				resultOut->addContactPoint(-normal, pointPositionInGlobal, collisionDepth);
+			}
 		}
 	}
 
@@ -106,84 +152,15 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 	numChildren = m_voxelCollisionInfo.size();
 	btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
 
-	while (i < numChildren)
-	{
-		btVoxelCollisionInfo& info = m_voxelCollisionInfo[i];
 
-		btVoxelInfo childInfo;
-		contentProvider->getVoxel(info.position.x, info.position.y, info.position.z, childInfo);
-		if(childInfo.m_collisionShape != nullptr)
-		{
-			if (info.algorithm != nullptr && (childInfo.m_collisionShape->getShapeType() != info.shapeType || !childInfo.m_blocking))
-			{
-				// This doesn't make any sense, I think this code can be deleted.
-				btAssert(false);
-				btCollisionAlgorithm* algo = info.algorithm;
-				info.algorithm = nullptr;
-				algo->~btCollisionAlgorithm();
-				m_dispatcher->freeCollisionAlgorithm(algo);
-			}
-			if (childInfo.m_blocking)
-			{
-				btTransform voxelTranform;
-
-				voxelTranform.setIdentity();
-				voxelTranform.setOrigin(btVector3(info.position.x * scale.x() + childInfo.m_collisionOffset.x(),
-												  info.position.y * scale.y() + childInfo.m_collisionOffset.y(),
-												  info.position.z * scale.z() + childInfo.m_collisionOffset.z()));
-
-				// The transform for the individual voxel shape is its own local transform, followed by the voxel world transform.
-				voxelTranform = voxelWorldTransform * voxelTranform;
-
-				btCollisionObjectWrapper voxelWrap(colObjWrap, childInfo.m_collisionShape, colObjWrap->getCollisionObject(),
-												   voxelTranform, -1, -1);
-				if (info.algorithm == nullptr)
-				{
-					info.algorithm = m_dispatcher->findAlgorithm(&voxelWrap, otherObjWrap, m_sharedManifold,
-																 BT_CONTACT_POINT_ALGORITHMS);
-					info.shapeType = childInfo.m_collisionShape->getShapeType();
-					info.voxelTypeId = childInfo.m_voxelTypeId;
-				}
-
-
-				btCollisionObject* tmpCollision = const_cast<btCollisionObject*>(colObjWrap->getCollisionObject());
-				tmpCollision->setFriction(childInfo.m_friction);
-				tmpCollision->setRestitution(childInfo.m_restitution);
-				tmpCollision->setRollingFriction(childInfo.m_rollingFriction);
-				tmpCollision->setVoxelPosition(info.position);
-
-				const btCollisionObjectWrapper* tmpWrap = nullptr;
-				if (resultOut->getBody0Internal() == colObjWrap->getCollisionObject())
-				{
-					tmpWrap = resultOut->getBody0Wrap();
-					resultOut->setBody0Wrap(&voxelWrap);
-					resultOut->setShapeIdentifiersA(-1, i);
-				}
-				else
-				{
-					tmpWrap = resultOut->getBody1Wrap();
-					resultOut->setBody1Wrap(&voxelWrap);
-					resultOut->setShapeIdentifiersB(-1, i);
-				}
-
-				info.algorithm->processCollision(&voxelWrap, otherObjWrap, dispatchInfo, resultOut);
-
-				if (resultOut->getBody0Internal() == colObjWrap->getCollisionObject())
-				{
-					resultOut->setBody0Wrap(tmpWrap);
-				}
-				else
-				{
-					resultOut->setBody1Wrap(tmpWrap);
-				}
-			}
-
-			++i;
-		}
-	}
 	if (numChildren < m_voxelCollisionInfo.size())
 	{
 		m_voxelCollisionInfo.resize(numChildren);
+	}
+
+	if (m_ownManifold)
+	{
+		resultOut->refreshContactPoints();
 	}
 }
 

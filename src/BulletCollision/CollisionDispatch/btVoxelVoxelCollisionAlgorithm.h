@@ -42,7 +42,8 @@ protected:
 	// Stores all the collision points between both voxel shapes
 	b3AlignedObjectArray<btVoxelCollisionInfo> m_voxelCollisionInfo;
 	// Idk
-	class btPersistentManifold*	m_sharedManifold;
+	bool m_ownManifold;
+	btPersistentManifold*	m_sharedManifold;
 
 public:
 
@@ -56,13 +57,8 @@ public:
 
 	virtual	void	getAllContactManifolds(btManifoldArray&	manifoldArray)
 	{
-		int i;
-		for (i=0;i<m_voxelCollisionInfo.size();i++)
-		{
-		    if(m_voxelCollisionInfo[i].algorithm) {
-			    m_voxelCollisionInfo[i].algorithm->getAllContactManifolds(manifoldArray);
-			}
-		}
+		if (m_sharedManifold && m_ownManifold)
+			manifoldArray.push_back(m_sharedManifold);
 	}
 
 

@@ -223,7 +223,7 @@ void VoxelDemo::initPhysics()
 		if (isDynamic)
 			colShape->calculateLocalInertia(mass,localInertia);
 
-
+		/*
 		for (int k=0;k<ARRAY_SIZE_Y;k++)
 		{
 			for (int i=0;i<ARRAY_SIZE_X;i++)
@@ -242,6 +242,7 @@ void VoxelDemo::initPhysics()
 				}
 			}
 		}
+		 */
 	}
 
 	m_guiHelper->autogenerateGraphicsObjects(m_dynamicsWorld);
