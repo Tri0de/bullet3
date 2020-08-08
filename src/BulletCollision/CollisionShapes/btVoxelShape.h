@@ -115,6 +115,7 @@ struct btVoxelContentProvider
 	// Should only ever be used for rendering in demos
 	virtual std::vector<btVector3i>::const_iterator begin() const = 0;
 	virtual std::vector<btVector3i>::const_iterator end() const = 0;
+	virtual bool isSurfaceOrSet(int x, int y, int z) const = 0;
 };
 
 /// The btVoxelShape is a three dimensional grid of arbitrary size, with each cell containing a voxel. The contents of each cell is delegated to a

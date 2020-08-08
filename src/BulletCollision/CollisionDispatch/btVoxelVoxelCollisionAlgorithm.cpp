@@ -56,6 +56,9 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 
 	btAssert(colObjWrap->getCollisionShape()->isVoxel());
 	const btVoxelShape* voxelShape = static_cast<const btVoxelShape*>(colObjWrap->getCollisionShape());
+	const btVoxelShape* otherVoxelShape = static_cast<const btVoxelShape*>(otherObjWrap->getCollisionShape());
+
+	btTransform inverseOtherTransform = otherObjWrap->getWorldTransform().inverse();
 
 	btTransform voxelWorldTransform = colObjWrap->getWorldTransform();
 	btTransform inverseVoxelWorldTransform = voxelWorldTransform.inverse();
@@ -85,12 +88,18 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 	for (auto it = voxelShapeIterator; it != voxelShapeIteratorEnd; it++) {
 		const btVector3i blockPos = *it;
 
-		btVoxelCollisionInfo collisionInfo;
-		collisionInfo.position.x = blockPos.x;
-		collisionInfo.position.y = blockPos.y;
-		collisionInfo.position.z = blockPos.z;
-		collisionInfo.algorithm = nullptr;
-		m_voxelCollisionInfo.push_back(collisionInfo);
+		btVector3 positionInOther(blockPos.x, blockPos.y, blockPos.z);
+
+		positionInOther = inverseOtherTransform * voxelWorldTransform * positionInOther;
+
+		if (otherVoxelShape->getContentProvider()->isSurfaceOrSet(round(positionInOther.x()), round(positionInOther.y()), round(positionInOther.z()))) {
+			btVoxelCollisionInfo collisionInfo;
+			collisionInfo.position.x = blockPos.x;
+			collisionInfo.position.y = blockPos.y;
+			collisionInfo.position.z = blockPos.z;
+			collisionInfo.algorithm = nullptr;
+			m_voxelCollisionInfo.push_back(collisionInfo);
+		}
 	}
 
 

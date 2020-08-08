@@ -97,14 +97,31 @@ struct VoxelWorld : public btVoxelContentProvider
 				btVector3i blockPos(x, y, z);
 				setOfBlocks.push_back(blockPos);
 				voxelData[convertPosToIndex(x, y, z)] = 1;
+
+				for (int xOff = -1; xOff <= 1; xOff++) {
+					for (int yOff = -1; yOff <= 1; yOff++) {
+						for (int zOff = -1; zOff <= 1; zOff++) {
+							if (xOff == 0 && yOff == 0 && zOff == 0) {
+								continue;
+							}
+							// Promote type to hasNeighbors
+							voxelData[convertPosToIndex(x + xOff, y + yOff, z + zOff)] |= 128;
+						}
+					}
+				}
 			}
 		}
+	}
+
+	bool isSurfaceOrSet(int x, int y, int z) const override {
+		uint8_t data = voxelData[convertPosToIndex(x, y, z)];
+		return ((data & 1) == 1) || ((data & 128) == 128);
 	}
 
 	void getVoxel(int x, int y, int z,btVoxelInfo& info) const override {
 		btVector3i blockPos(x, y, z);
 
-		if (voxelData[convertPosToIndex(x, y, z)] == 1) {
+		if ((voxelData[convertPosToIndex(x, y, z)] & 1) == 1) {
 			info.m_blocking = true;
 			info.m_voxelTypeId = 1;
 			info.m_tracable = true;
