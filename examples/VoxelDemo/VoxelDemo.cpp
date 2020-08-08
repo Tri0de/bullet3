@@ -73,12 +73,19 @@ struct VoxelDemo : public CommonRigidBodyBase
 
 struct VoxelWorld : public btVoxelContentProvider
 {
-	std::unordered_set<btVector3i, btVector3iHasher, btVector3iComparator> setOfBlocks;
+	std::vector<btVector3i> setOfBlocks;
+
+	uint8_t* voxelData;
+	int minX, maxX, minY, maxY, minZ, maxZ;
+
 	// This is only correct assuming scaling is <1,1,1>
 	// Should always be equal to scaling / 2
 	btBoxShape* typicalBox = new btBoxShape((btVector3(btScalar(.5), btScalar(.5), btScalar(.5))));
 
 	VoxelWorld() {
+		minX = minY = minZ = -128;
+		maxX = maxY = maxZ = 127;
+		voxelData = (uint8_t*) calloc((maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1), sizeof(uint8_t));
 		int radius = 10;
 		for (int x = -radius; x <= radius; x++) {
 			for (int z = -radius; z <= radius; z++) {
@@ -88,7 +95,8 @@ struct VoxelWorld : public btVoxelContentProvider
 				}
 				int y = 0;
 				btVector3i blockPos(x, y, z);
-				setOfBlocks.insert(blockPos);
+				setOfBlocks.push_back(blockPos);
+				voxelData[convertPosToIndex(x, y, z)] = 1;
 			}
 		}
 	}
@@ -96,7 +104,7 @@ struct VoxelWorld : public btVoxelContentProvider
 	void getVoxel(int x, int y, int z,btVoxelInfo& info) const override {
 		btVector3i blockPos(x, y, z);
 
-		if (setOfBlocks.count(blockPos) == 1) {
+		if (voxelData[convertPosToIndex(x, y, z)] == 1) {
 			info.m_blocking = true;
 			info.m_voxelTypeId = 1;
 			info.m_tracable = true;
@@ -111,11 +119,17 @@ struct VoxelWorld : public btVoxelContentProvider
 		}
 	}
 
-	std::unordered_set<btVector3i>::iterator begin() const override {
+	int convertPosToIndex(int x, int y, int z) const {
+		size_t xLen = maxX - minX + 1;
+		size_t yLen = maxY - minY + 1;
+		return (x - minX) + xLen * (y - minY) + xLen * yLen * (z - minZ);
+	}
+
+	std::vector<btVector3i>::const_iterator begin() const override {
 		return setOfBlocks.begin();
 	}
 
-	std::unordered_set<btVector3i>::iterator end() const override {
+	std::vector<btVector3i>::const_iterator end() const override {
 		return setOfBlocks.end();
 	}
 };

@@ -85,12 +85,12 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 	for (auto it = voxelShapeIterator; it != voxelShapeIteratorEnd; it++) {
 		const btVector3i blockPos = *it;
 
-		int newIndex = m_voxelCollisionInfo.size();
-		m_voxelCollisionInfo.resize(newIndex + 1);
-		m_voxelCollisionInfo[newIndex].position.x = blockPos.x;
-		m_voxelCollisionInfo[newIndex].position.y = blockPos.y;
-		m_voxelCollisionInfo[newIndex].position.z = blockPos.z;
-		m_voxelCollisionInfo[newIndex].algorithm = nullptr;
+		btVoxelCollisionInfo collisionInfo;
+		collisionInfo.position.x = blockPos.x;
+		collisionInfo.position.y = blockPos.y;
+		collisionInfo.position.z = blockPos.z;
+		collisionInfo.algorithm = nullptr;
+		m_voxelCollisionInfo.push_back(collisionInfo);
 	}
 
 

@@ -597,6 +597,7 @@ void btCollisionWorld::rayTestSingleInternal(const btTransform& rayFromTrans, co
 			}
 			else if (collisionShape->isVoxel())
 			{
+				/*
 				const btVoxelShape* voxelShape = static_cast<const btVoxelShape*>(collisionShape);
 				const btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
 
@@ -673,6 +674,7 @@ void btCollisionWorld::rayTestSingleInternal(const btTransform& rayFromTrans, co
 					tNext[next] += delta[next];
 					currentVox[next] += increments[next];
 				}
+				 */
 			}
 		}
 	}
@@ -1004,6 +1006,7 @@ void btCollisionWorld::objectQuerySingleInternal(const btConvexShape* castShape,
 			}
 			else {
 				if (collisionShape->isVoxel()) {
+					/*
 					const btVoxelShape* voxelShape = static_cast<const btVoxelShape*>(collisionShape);
 					const btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
 
@@ -1046,6 +1049,7 @@ void btCollisionWorld::objectQuerySingleInternal(const btConvexShape* castShape,
 							}
 						}
 					}
+					 */
 				}
 			}
 		}
