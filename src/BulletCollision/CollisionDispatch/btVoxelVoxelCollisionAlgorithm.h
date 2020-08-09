@@ -39,9 +39,7 @@ class btCollisionShape;
 class btVoxelVoxelCollisionAlgorithm : public btCollisionAlgorithm
 {
 protected:
-	// Stores all the collision points between both voxel shapes
-	b3AlignedObjectArray<btVoxelCollisionInfo> m_voxelCollisionInfo;
-	// Idk
+
 	bool m_ownManifold;
 	btPersistentManifold*	m_sharedManifold;
 

@@ -31,25 +31,12 @@ btVoxelVoxelCollisionAlgorithm::btVoxelVoxelCollisionAlgorithm(const btCollision
 	  m_ownManifold(false),
 	  m_sharedManifold(ci.m_manifold)
 {
-
 	btAssert(body0Wrap->getCollisionShape()->isVoxel());
 	btAssert(body1Wrap->getCollisionShape()->isVoxel());
-
-	// I have no idea what this is for
-	m_voxelCollisionInfo.reserve(30);
 }
 
 btVoxelVoxelCollisionAlgorithm::~btVoxelVoxelCollisionAlgorithm()
 {
-	int numChildren = m_voxelCollisionInfo.size();
-	for (int i = 0; i < numChildren; i++)
-	{
-		if (m_voxelCollisionInfo[i].algorithm)
-		{
-			m_voxelCollisionInfo[i].algorithm->~btCollisionAlgorithm();
-			m_dispatcher->freeCollisionAlgorithm(m_voxelCollisionInfo[i].algorithm);
-		}
-	}
 	if (m_ownManifold)
 	{
 		if (m_sharedManifold)
@@ -59,8 +46,10 @@ btVoxelVoxelCollisionAlgorithm::~btVoxelVoxelCollisionAlgorithm()
 
 void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut)
 {
-	const btCollisionObjectWrapper* colObjWrap = body0Wrap;
-	const btCollisionObjectWrapper* otherObjWrap = body1Wrap;
+	// These are swapped because I must've mixed up the pointshell and voxmap shapes in the implementation
+	// Thankfully this seems to work fine
+	const btCollisionObjectWrapper* colObjWrap = body1Wrap;
+	const btCollisionObjectWrapper* otherObjWrap = body0Wrap;
 
 	// Create the persistent manifold
 	// if (true) { // resultOut->getPersistentManifold() == nullptr) {
@@ -74,9 +63,9 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 		m_sharedManifold = m_dispatcher->getNewManifold(body0Wrap->getCollisionObject(), body1Wrap->getCollisionObject());
 		m_ownManifold = true;
 	}
-	if (m_sharedManifold->getNumContacts() != 0) {
+	// if (m_sharedManifold->getNumContacts() != 0) {
 		m_sharedManifold->clearManifold();
-	}
+	// }
 	resultOut->setPersistentManifold(m_sharedManifold);
 
 	btAssert(colObjWrap->getCollisionShape()->isVoxel());
@@ -131,33 +120,20 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 			btVector3 forceVoxelPositionInGlobal(round(pointPositionInOtherLocal.x()), round(pointPositionInOtherLocal.y()), round(pointPositionInOtherLocal.z()));
 			forceVoxelPositionInGlobal = otherTransform * forceVoxelPositionInGlobal;
 
-
-			// For now, just assume the normal is always up
+			// The normal vector of the pointshell point
 			btVector3 normal(0, 1, 0);
+			normal = voxelWorldTransform.getBasis() * normal;
 
-			// Crappy tangent plane math
-			if (pointPositionInGlobal.y() > forceVoxelPositionInGlobal.y()) {
-				// Do nothing
-			} else {
-				double collisionDepth = pointPositionInGlobal.y() - forceVoxelPositionInGlobal.y();
-				if (abs(collisionDepth) < .1) {
-					int j = 4;
-				}
+			btVector3 positionDif = pointPositionInGlobal - forceVoxelPositionInGlobal;
+			// The collision depth of the contact
+			btScalar collisionDepth = positionDif.dot(normal);
+
+			if (collisionDepth < 0) {
 				resultOut->addContactPoint(-normal, pointPositionInGlobal, collisionDepth);
 			}
 		}
 	}
-
-
-	numChildren = m_voxelCollisionInfo.size();
-	btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
-
-
-	if (numChildren < m_voxelCollisionInfo.size())
-	{
-		m_voxelCollisionInfo.resize(numChildren);
-	}
-
+	
 	if (m_ownManifold)
 	{
 		resultOut->refreshContactPoints();

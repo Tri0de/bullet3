@@ -197,6 +197,18 @@ void VoxelDemo::initPhysics()
 		fallingTransform.setOrigin(btVector3(0, 20, 0));
 
 		auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
+
+		btTransform fallingTransform2;
+		fallingTransform2.setIdentity();
+		fallingTransform2.setOrigin(btVector3(0, 30, 0));
+
+		auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
+
+		btTransform fallingTransform3;
+		fallingTransform3.setIdentity();
+		fallingTransform3.setOrigin(btVector3(0, 50, 0));
+
+		auto* fallingVoxelWorld3 = createRigidBody(fallingVoxelWorldMass, fallingTransform3, voxelWorld, btVector4(0,0,0,0));
 	}
 
 
