@@ -106,32 +106,93 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 
 		positionInOther = inverseOtherTransform * voxelWorldTransform * positionInOther;
 
-		if (otherVoxelShape->getContentProvider()->isSurfaceOrSet(round(positionInOther.x()), round(positionInOther.y()), round(positionInOther.z()))) {
+
+		auto func = [otherVoxelShape, blockPos, voxelWorldTransform, otherTransform, inverseOtherTransform, resultOut] (const btVector3 offset, const btVector3 normal) {
+			btVector3 normalCopy = normal;
+			btVector3 positionInOther(blockPos.x, blockPos.y, blockPos.z);
+			positionInOther += offset;
+
+			positionInOther = inverseOtherTransform * voxelWorldTransform * positionInOther;
+
+			btVector3 otherVoxelPosition(round(positionInOther.x()), round(positionInOther.y()), round(positionInOther.z()));
+
+			if (otherVoxelShape->getContentProvider()->isSurfaceOrSet((int) otherVoxelPosition.x(), (int) otherVoxelPosition.y(), (int) otherVoxelPosition.z())) {
+
+				btVector3 rotatedNormal = voxelWorldTransform.getBasis() * normal;
+
+				btVector3 pointPositionInGlobal((btScalar) blockPos.x + offset.x(), (btScalar) blockPos.y + offset.y(),
+												(btScalar) blockPos.z + offset.z());
+				pointPositionInGlobal = voxelWorldTransform * pointPositionInGlobal;
+
+				btVector3 forceVoxelPositionInGlobal = otherTransform * otherVoxelPosition;
 
 
-			// First compute the point's position in global
-			btVector3 pointPositionInGlobal(blockPos.x, blockPos.y, blockPos.z);
-			pointPositionInGlobal = voxelWorldTransform * pointPositionInGlobal;
+				btVector3 positionDif = pointPositionInGlobal - forceVoxelPositionInGlobal;
+				// The collision depth of the contact
+				btScalar collisionDepth = positionDif.dot(rotatedNormal);
 
-			// Then compute the point's position in the other voxel world space
-			btVector3 pointPositionInOtherLocal = inverseOtherTransform * pointPositionInGlobal;
+				bool isSurface = otherVoxelShape->getContentProvider()->isSurface((int) otherVoxelPosition.x(), (int) otherVoxelPosition.y(), (int) otherVoxelPosition.z());
+				bool isProximity = otherVoxelShape->getContentProvider()->isProximity((int) otherVoxelPosition.x(), (int) otherVoxelPosition.y(), (int) otherVoxelPosition.z());
 
-			// Then compute the force voxel's position in global
-			btVector3 forceVoxelPositionInGlobal(round(pointPositionInOtherLocal.x()), round(pointPositionInOtherLocal.y()), round(pointPositionInOtherLocal.z()));
-			forceVoxelPositionInGlobal = otherTransform * forceVoxelPositionInGlobal;
+				// If we are a surface voxel then the point must always be outside, so we add .5 to the collision depth
+				if (isSurface) {
+					collisionDepth -= .5;
+				}
 
-			// The normal vector of the pointshell point
-			btVector3 normal(0, 1, 0);
-			normal = voxelWorldTransform.getBasis() * normal;
+				// If collisionDepth < 0 then the point is intersecting with the voxel
+				if (collisionDepth < 0) {
+					// Now make sure that pushing in this direction will actually push the voxel shapes apart, not towards each other
+					btVector3i offsets[] = { btVector3i(1, 0, 0), btVector3i(-1, 0, 0), btVector3i(0, 1, 0),
+							  btVector3i(0, -1, 0), btVector3i(0, 0, 1), btVector3i(0, 0, -1) };
+					for (btVector3i offset : offsets) {
+						bool isOffsetSurface = otherVoxelShape->getContentProvider()->isSurface((int) otherVoxelPosition.x() + offset.x, (int) otherVoxelPosition.y() + offset.y, (int) otherVoxelPosition.z() + offset.z);
+						bool isOffsetProximity = otherVoxelShape->getContentProvider()->isProximity((int) otherVoxelPosition.x() + offset.x, (int) otherVoxelPosition.y() + offset.y, (int) otherVoxelPosition.z() + offset.z);
 
-			btVector3 positionDif = pointPositionInGlobal - forceVoxelPositionInGlobal;
-			// The collision depth of the contact
-			btScalar collisionDepth = positionDif.dot(normal);
+						btVector3 lazy(offset.x, offset.y, offset.z);
+						lazy = otherTransform.getBasis() * lazy;
 
-			if (collisionDepth < 0) {
-				resultOut->addContactPoint(-normal, pointPositionInGlobal, collisionDepth);
+						bool isNormalTowards = rotatedNormal.dot(lazy) > 0.7;
+
+						if (isNormalTowards) {
+							if (isSurface && isOffsetSurface) {
+								// If we're a surface voxel, then don't push towards other surface voxels
+								return;
+							}
+							if (isProximity && (isOffsetSurface || isOffsetProximity)) {
+								// If we're a proximity voxel, then don't push towards surface voxels or other proximity voxels.
+								return;
+							}
+							if (isSurface) {
+								collisionDepth = collisionDepth - .5;
+							}
+							break;
+						}
+
+					}
+
+					resultOut->addContactPoint(-rotatedNormal, pointPositionInGlobal, collisionDepth);
+				}
 			}
-		}
+		};
+
+		// This is a pretty bad way of doing normals, checking every possibility is not the right way to do it :P
+		func(btVector3(0, 0, 0), btVector3(1, 0, 0));
+		func(btVector3(0, 0, 0), btVector3(-1, 0, 0));
+		func(btVector3(0, 0, 0), btVector3(0, 1, 0));
+		func(btVector3(0, 0, 0), btVector3(0, -1, 0));
+		func(btVector3(0, 0, 0), btVector3(0, 0, 1));
+		func(btVector3(0, 0, 0), btVector3(0, 0, -1));
+
+		/*
+		const btScalar pointDepth = .2;
+
+		func(btVector3(pointDepth, 0, 0),btVector3(1, 0, 0));
+		func(btVector3(-pointDepth, 0, 0),btVector3(1, 0, 0));
+		func(btVector3(0, pointDepth, 0),btVector3(0, 1, 0));
+		func(btVector3(0, -pointDepth, 0),btVector3(0, 1, 0));
+		func(btVector3(0, 0, pointDepth),btVector3(0, 0, 1));
+		func(btVector3(0, 0, -pointDepth),btVector3(0, 0, 1));
+		 */
 	}
 	
 	if (m_ownManifold)

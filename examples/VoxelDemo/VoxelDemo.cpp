@@ -87,25 +87,31 @@ struct VoxelWorld : public btVoxelContentProvider
 		maxX = maxY = maxZ = 127;
 		voxelData = (uint8_t*) calloc((maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1), sizeof(uint8_t));
 		int radius = 10;
-		for (int x = -radius; x <= radius; x++) {
-			for (int z = -radius; z <= radius; z++) {
-				// Make a checkerboard pattern in the voxel world
-				if ((x + z) % 2 == 0) {
-					continue;
-				}
-				int y = 0;
-				btVector3i blockPos(x, y, z);
-				setOfBlocks.push_back(blockPos);
-				voxelData[convertPosToIndex(x, y, z)] = 1;
+		for (int y = 0; y < 5; y++) {
+			for (int x = -radius; x <= radius; x++) {
+				for (int z = -radius; z <= radius; z++) {
+					int yShapeThing = y;
+					if (abs(x) + abs(z) > 2) {
+						yShapeThing = 0;
+					}
+						// Make a checkerboard pattern in the voxel world
+					else if ((x + z) % 2 == 0) {
+						continue;
+					}
 
-				for (int xOff = -1; xOff <= 1; xOff++) {
-					for (int yOff = -1; yOff <= 1; yOff++) {
-						for (int zOff = -1; zOff <= 1; zOff++) {
-							if (xOff == 0 && yOff == 0 && zOff == 0) {
-								continue;
+					btVector3i blockPos(x, yShapeThing, z);
+					setOfBlocks.push_back(blockPos);
+					voxelData[convertPosToIndex(x, yShapeThing, z)] = 1;
+
+					for (int xOff = -1; xOff <= 1; xOff++) {
+						for (int yOff = -1; yOff <= 1; yOff++) {
+							for (int zOff = -1; zOff <= 1; zOff++) {
+								if (xOff == 0 && yOff == 0 && zOff == 0) {
+									continue;
+								}
+								// Promote type to hasNeighbors
+								voxelData[convertPosToIndex(x + xOff, yShapeThing + yOff, z + zOff)] |= 128;
 							}
-							// Promote type to hasNeighbors
-							voxelData[convertPosToIndex(x + xOff, y + yOff, z + zOff)] |= 128;
 						}
 					}
 				}
@@ -149,6 +155,14 @@ struct VoxelWorld : public btVoxelContentProvider
 	std::vector<btVector3i>::const_iterator end() const override {
 		return setOfBlocks.end();
 	}
+
+	bool isProximity(int x, int y, int z) const override {
+		return (voxelData[convertPosToIndex(x, y, z)] & 128u) != 0;
+	}
+
+	bool isSurface(int x, int y, int z) const override {
+		return (voxelData[convertPosToIndex(x, y, z)] & 1u) != 0;
+	}
 };
 
 void VoxelDemo::initPhysics()
@@ -164,7 +178,7 @@ void VoxelDemo::initPhysics()
 
 	btVoxelContentProvider* provider = new VoxelWorld();
 
-	auto* voxelWorld = new btVoxelShape(provider, btVector3(-10.5, -.5, -10.5), btVector3(10.5, .5, 10.5));
+	auto* voxelWorld = new btVoxelShape(provider, btVector3(-11.5, -1.5, -11.5), btVector3(11.5, 6.5, 11.5));
 
 	// For now, just don't support scaling
 	// voxelWorld->setLocalScaling(btVector3(0.5, 0.5, 0.5));
@@ -188,27 +202,31 @@ void VoxelDemo::initPhysics()
 	groundTransform.setOrigin(btVector3(0,0,0));
 	{
 		btScalar mass(0.);
-		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
+
 
 		// Create another voxel world, make this one fall
 		btScalar fallingVoxelWorldMass(10.);
 		btTransform fallingTransform;
 		fallingTransform.setIdentity();
-		fallingTransform.setOrigin(btVector3(0, 20, 0));
+		fallingTransform.setOrigin(btVector3(0, 50, 0));
 
-		auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
+		// auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
 
 		btTransform fallingTransform2;
 		fallingTransform2.setIdentity();
-		fallingTransform2.setOrigin(btVector3(0, 30, 0));
+		fallingTransform2.setOrigin(btVector3(3, 30, 0));
 
-		auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
+		// auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
 
 		btTransform fallingTransform3;
 		fallingTransform3.setIdentity();
-		fallingTransform3.setOrigin(btVector3(0, 50, 0));
+		fallingTransform3.setOrigin(btVector3(0, 20, -4));
+
+
 
 		auto* fallingVoxelWorld3 = createRigidBody(fallingVoxelWorldMass, fallingTransform3, voxelWorld, btVector4(0,0,0,0));
+
+		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
 	}
 
 
