@@ -44,6 +44,8 @@ btVoxelVoxelCollisionAlgorithm::~btVoxelVoxelCollisionAlgorithm()
 	}
 }
 
+#define BT_VOXEL_NEGATIVE_INFINITY -999.
+
 void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut)
 {
 	// These are swapped because I must've mixed up the pointshell and voxmap shapes in the implementation
@@ -107,8 +109,8 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 		positionInOther = inverseOtherTransform * voxelWorldTransform * positionInOther;
 
 
-		auto func = [otherVoxelShape, blockPos, voxelWorldTransform, otherTransform, inverseOtherTransform, resultOut] (const btVector3 offset, const btVector3 normal) {
-			btVector3 normalCopy = normal;
+		auto func = [voxelShape, otherVoxelShape, blockPos, voxelWorldTransform, otherTransform, inverseOtherTransform, resultOut] (const btVector3 offset, const btVector3 normal) {
+
 			btVector3 positionInOther(blockPos.x, blockPos.y, blockPos.z);
 			positionInOther += offset;
 
@@ -116,9 +118,9 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 
 			btVector3 otherVoxelPosition(round(positionInOther.x()), round(positionInOther.y()), round(positionInOther.z()));
 
-			if (otherVoxelShape->getContentProvider()->isSurfaceOrSet((int) otherVoxelPosition.x(), (int) otherVoxelPosition.y(), (int) otherVoxelPosition.z())) {
+			if (otherVoxelShape->getContentProvider()->isSurface((int) otherVoxelPosition.x(), (int) otherVoxelPosition.y(), (int) otherVoxelPosition.z()) || otherVoxelShape->getContentProvider()->isProximity((int) otherVoxelPosition.x(), (int) otherVoxelPosition.y(), (int) otherVoxelPosition.z())) {
 
-				btVector3 rotatedNormal = voxelWorldTransform.getBasis() * normal;
+				btVector3 rotatedNormal = normal;
 
 				btVector3 pointPositionInGlobal((btScalar) blockPos.x + offset.x(), (btScalar) blockPos.y + offset.y(),
 												(btScalar) blockPos.z + offset.z());
@@ -151,48 +153,76 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 						btVector3 lazy(offset.x, offset.y, offset.z);
 						lazy = otherTransform.getBasis() * lazy;
 
-						bool isNormalTowards = rotatedNormal.dot(lazy) > 0.7;
+						bool isNormalTowards = rotatedNormal.dot(lazy) > 0.3;
 
 						if (isNormalTowards) {
 							if (isSurface && isOffsetSurface) {
 								// If we're a surface voxel, then don't push towards other surface voxels
-								return;
+								return BT_VOXEL_NEGATIVE_INFINITY;
 							}
 							if (isProximity && (isOffsetSurface || isOffsetProximity)) {
 								// If we're a proximity voxel, then don't push towards surface voxels or other proximity voxels.
-								return;
-							}
-							if (isSurface) {
-								collisionDepth = collisionDepth - .5;
+								return BT_VOXEL_NEGATIVE_INFINITY;
 							}
 							break;
 						}
 
 					}
 
-					resultOut->addContactPoint(-rotatedNormal, pointPositionInGlobal, collisionDepth);
+					// resultOut->addContactPoint(-rotatedNormal, pointPositionInGlobal, collisionDepth);
+					return (double) collisionDepth;
 				}
 			}
+			return BT_VOXEL_NEGATIVE_INFINITY;
 		};
 
-		// This is a pretty bad way of doing normals, checking every possibility is not the right way to do it :P
-		func(btVector3(0, 0, 0), btVector3(1, 0, 0));
-		func(btVector3(0, 0, 0), btVector3(-1, 0, 0));
-		func(btVector3(0, 0, 0), btVector3(0, 1, 0));
-		func(btVector3(0, 0, 0), btVector3(0, -1, 0));
-		func(btVector3(0, 0, 0), btVector3(0, 0, 1));
-		func(btVector3(0, 0, 0), btVector3(0, 0, -1));
+		const btVector3 normals[] = { btVector3(1, 0, 0), btVector3(-1, 0, 0), btVector3(0, 1, 0),
+								 btVector3(0, -1, 0), btVector3(0, 0, 1), btVector3(0, 0, -1) };
 
-		/*
-		const btScalar pointDepth = .2;
+		btVector3 idealNormal(0, 0, 0);
+		double collisionDepth = BT_VOXEL_NEGATIVE_INFINITY;
 
-		func(btVector3(pointDepth, 0, 0),btVector3(1, 0, 0));
-		func(btVector3(-pointDepth, 0, 0),btVector3(1, 0, 0));
-		func(btVector3(0, pointDepth, 0),btVector3(0, 1, 0));
-		func(btVector3(0, -pointDepth, 0),btVector3(0, 1, 0));
-		func(btVector3(0, 0, pointDepth),btVector3(0, 0, 1));
-		func(btVector3(0, 0, -pointDepth),btVector3(0, 0, 1));
-		 */
+
+		btVector3i otherVoxelPosition((int) round(positionInOther.x()), (int) round(positionInOther.y()), (int) round(positionInOther.z()));
+
+
+		// Test 12 possible normals (There are 6 normals per voxel shape, and 2 voxel shapes)
+		for (auto normal : normals) {
+			// Test the normal on the point shell
+			{
+				// Don't use surface normals that point towards neighbor blocks
+				if (!voxelShape->getContentProvider()->isSurface(blockPos.x - (int) normal.x(), blockPos.y - (int) normal.y(), blockPos.z - (int) normal.z())) {
+					btVector3 rotatedInFirst = voxelWorldTransform.getBasis() * normal;
+					double depthAtNormal = func(btVector3(0, 0, 0), rotatedInFirst);
+					// We wan to minimize collision depth
+					if (depthAtNormal > collisionDepth) {
+						collisionDepth = depthAtNormal;
+						idealNormal = rotatedInFirst;
+					}
+				}
+			}
+			// Test the normal on the voxel map
+			{
+				btVector3 rotatedInFirst = otherTransform.getBasis() * normal;
+				double depthAtNormal = func(btVector3(0, 0, 0), rotatedInFirst);
+				// We wan to minimize collision depth
+				if (depthAtNormal > collisionDepth) {
+					collisionDepth = depthAtNormal;
+					idealNormal = rotatedInFirst;
+				}
+			}
+		}
+
+		// Check if we found a valid collision normal
+		if (collisionDepth != BT_VOXEL_NEGATIVE_INFINITY) {
+			// If we did then add the collision point to the manifold
+			btVector3 pointPositionInGlobal((btScalar) blockPos.x, (btScalar) blockPos.y,
+											(btScalar) blockPos.z);
+			pointPositionInGlobal = voxelWorldTransform * pointPositionInGlobal;
+
+			resultOut->addContactPoint(-idealNormal, pointPositionInGlobal, collisionDepth);
+		}
+
 	}
 	
 	if (m_ownManifold)

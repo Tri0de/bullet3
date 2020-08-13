@@ -110,14 +110,15 @@ ATTRIBUTE_ALIGNED16(struct) btVoxelInfo
 struct btVoxelContentProvider
 {
 	virtual ~btVoxelContentProvider() {}
-	virtual void getVoxel(int x, int y, int z,btVoxelInfo&) const = 0;
+	virtual void getVoxel(int x, int y, int z, btVoxelInfo&) const = 0;
 	// Used to iterate over all BlockPos in this voxel shape
 	// Should only ever be used for rendering in demos
 	virtual std::vector<btVector3i>::const_iterator begin() const = 0;
 	virtual std::vector<btVector3i>::const_iterator end() const = 0;
-	virtual bool isSurfaceOrSet(int x, int y, int z) const = 0;
 	virtual bool isProximity(int x, int y, int z) const = 0;
 	virtual bool isSurface(int x, int y, int z) const = 0;
+	virtual bool isInterior(int x, int y, int z) const = 0;
+	virtual bool isAir(int x, int y, int z) const = 0;
 };
 
 /// The btVoxelShape is a three dimensional grid of arbitrary size, with each cell containing a voxel. The contents of each cell is delegated to a

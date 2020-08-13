@@ -119,11 +119,6 @@ struct VoxelWorld : public btVoxelContentProvider
 		}
 	}
 
-	bool isSurfaceOrSet(int x, int y, int z) const override {
-		uint8_t data = voxelData[convertPosToIndex(x, y, z)];
-		return ((data & 1) == 1) || ((data & 128) == 128);
-	}
-
 	void getVoxel(int x, int y, int z,btVoxelInfo& info) const override {
 		btVector3i blockPos(x, y, z);
 
@@ -163,6 +158,14 @@ struct VoxelWorld : public btVoxelContentProvider
 	bool isSurface(int x, int y, int z) const override {
 		return (voxelData[convertPosToIndex(x, y, z)] & 1u) != 0;
 	}
+
+	bool isInterior(int x, int y, int z) const override {
+		return false;
+	}
+
+	bool isAir(int x, int y, int z) const override {
+		return false;
+	}
 };
 
 void VoxelDemo::initPhysics()
@@ -192,7 +195,7 @@ void VoxelDemo::initPhysics()
 	btVector3 rotationAxis(1, 0, 0);
 	rotationAxis.normalize();
 
-	float rotationAngle = 0;
+	float rotationAngle = 0.;
 	btQuaternion rotationQuaternion(rotationAxis, rotationAngle);
 
 	// For now, the ground transform is just the origin no rotation transform. Must btVoxelCollisionAlgorithm to support
@@ -210,13 +213,13 @@ void VoxelDemo::initPhysics()
 		fallingTransform.setIdentity();
 		fallingTransform.setOrigin(btVector3(0, 50, 0));
 
-		// auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
+		auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
 
 		btTransform fallingTransform2;
 		fallingTransform2.setIdentity();
 		fallingTransform2.setOrigin(btVector3(3, 30, 0));
 
-		// auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
+		auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
 
 		btTransform fallingTransform3;
 		fallingTransform3.setIdentity();

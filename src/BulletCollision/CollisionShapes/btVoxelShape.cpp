@@ -15,6 +15,7 @@ subject to the following restrictions:
 
 #include "btVoxelShape.h"
 #include "btCollisionShape.h"
+#include "btBoxShape.h"
 
 btVoxelShape::btVoxelShape(btVoxelContentProvider* contentProvider,const btVector3& aabbMin,const btVector3& aabbMax)
 : m_contentProvider(contentProvider), m_localAabbMin(aabbMin),
@@ -72,4 +73,38 @@ void btVoxelShape::setLocalScaling(const btVector3& scaling)
 {
 	m_localScaling = scaling;
 }
+
+struct ArrayBackedVoxelContentProvider : btVoxelContentProvider
+{
+	btBoxShape* typicalBox = new btBoxShape((btVector3(btScalar(.5), btScalar(.5), btScalar(.5))));
+
+	~ArrayBackedVoxelContentProvider() override = default;
+
+	void getVoxel(int x, int y, int z,btVoxelInfo& info) const override {
+		btVector3i blockPos(x, y, z);
+
+		if (isSurface(x, y, z) || isInterior(x, y, z)) {
+			info.m_blocking = true;
+			info.m_voxelTypeId = 1;
+			info.m_tracable = true;
+			info.m_collisionShape = typicalBox;
+			info.m_friction = 0.7;
+			info.m_restitution = 0.5;
+			info.m_rollingFriction = 0.7;
+			info.m_collisionOffset = btVector3(0, 0, 0);
+		} else {
+			info.m_blocking = false;
+			info.m_tracable = false;
+		}
+	}
+
+	// Used to iterate over all BlockPos in this voxel shape
+	// Should only ever be used for rendering in demos
+	virtual std::vector<btVector3i>::const_iterator begin() const = 0;
+	virtual std::vector<btVector3i>::const_iterator end() const = 0;
+	virtual bool isProximity(int x, int y, int z) const = 0;
+	virtual bool isSurface(int x, int y, int z) const = 0;
+	virtual bool isInterior(int x, int y, int z) const = 0;
+	virtual bool isAir(int x, int y, int z) const = 0;
+};
 
