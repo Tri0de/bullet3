@@ -87,22 +87,22 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 
 	// Voxel offset directions array
 	const btVector3 offsetDirections[6] = {
-			btVector3(0, 1, 0), // btVector3(1, 0, 0),
-			btVector3(0, 1, 0), // btVector3(0, 1, 0),
-			btVector3(0, 1, 0), // btVector3(0, 0, 1),
-			btVector3(0, -1, 0), // btVector3(-1, 0, 0),
-			btVector3(0, -1, 0), // btVector3(0, -1, 0),
-			btVector3(0, -1, 0), // btVector3(0, 0, -1)
+			btVector3(1, 0, 0),
+			btVector3(0, 1, 0),
+			btVector3(0, 0, 1),
+			btVector3(-1, 0, 0),
+			btVector3(0, -1, 0),
+			btVector3(0, 0, -1)
 	};
 
 	// The possible normals for the point in the point shell shape
 	const btVector3 pointNormals[6] = {
-			pointShellShapeTransform.getBasis() * offsetDirections[0],
-			pointShellShapeTransform.getBasis() * offsetDirections[1],
-			pointShellShapeTransform.getBasis() * offsetDirections[2],
-			pointShellShapeTransform.getBasis() * offsetDirections[3],
-			pointShellShapeTransform.getBasis() * offsetDirections[4],
-			pointShellShapeTransform.getBasis() * offsetDirections[5]
+			(pointShellShapeTransform.getBasis() * offsetDirections[0]),
+			(pointShellShapeTransform.getBasis() * offsetDirections[1]),
+			(pointShellShapeTransform.getBasis() * offsetDirections[2]),
+			(pointShellShapeTransform.getBasis() * offsetDirections[3]),
+			(pointShellShapeTransform.getBasis() * offsetDirections[4]),
+			(pointShellShapeTransform.getBasis() * offsetDirections[5])
 	};
 
 	// The possible normals for the voxels in the voxel shape
@@ -150,7 +150,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 		// Determine allowed normals for the point
 		for (size_t index = 0; index < 6; index++) {
 			const btVector3 offsetDirection = offsetDirections[index];
-			const uint8_t offsetVoxelType = pointShellShape->getContentProvider()->getVoxelType(blockPos.x + (int) offsetDirection.x(), blockPos.y - (int) offsetDirection.y(), blockPos.z + (int) offsetDirection.z());
+			const uint8_t offsetVoxelType = pointShellShape->getContentProvider()->getVoxelType(blockPos.x - (int) offsetDirection.x(), blockPos.y - (int) offsetDirection.y(), blockPos.z - (int) offsetDirection.z());
 			// Allow pushing from surface to proximity
 			if (pointType == VOX_TYPE_SURFACE && offsetVoxelType == VOX_TYPE_PROXIMITY) {
 				// We can push in this direction
@@ -179,6 +179,11 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 			if (voxelType == VOX_TYPE_INTERIOR && offsetVoxelType == VOX_TYPE_SURFACE) {
 				// We can push in this direction
 				voxelAllowedNormals[index] = true;
+			}
+
+			if (voxelType == VOX_TYPE_PROXIMITY && offsetVoxelType == VOX_TYPE_PROXIMITY && voxelAllowedNormals[index]) {
+				// We can't push in this direction
+				voxelAllowedNormals[index] = false;
 			}
 		}
 
