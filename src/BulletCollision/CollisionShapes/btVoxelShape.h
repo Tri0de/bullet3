@@ -106,6 +106,11 @@ ATTRIBUTE_ALIGNED16(struct) btVoxelInfo
 	SIMD_FORCE_INLINE bool isEmpty(){return m_voxelTypeId == -1;}
 };
 
+#define VOX_TYPE_AIR 0
+#define VOX_TYPE_PROXIMITY 1
+#define VOX_TYPE_SURFACE 2
+#define VOX_TYPE_INTERIOR 3
+
 /// Provider of voxel information for a given voxel position
 struct btVoxelContentProvider
 {
@@ -115,10 +120,7 @@ struct btVoxelContentProvider
 	// Should only ever be used for rendering in demos
 	virtual std::vector<btVector3i>::const_iterator begin() const = 0;
 	virtual std::vector<btVector3i>::const_iterator end() const = 0;
-	virtual bool isProximity(int x, int y, int z) const = 0;
-	virtual bool isSurface(int x, int y, int z) const = 0;
-	virtual bool isInterior(int x, int y, int z) const = 0;
-	virtual bool isAir(int x, int y, int z) const = 0;
+	virtual uint8_t getVoxelType(int x, int y, int z) const = 0;
 };
 
 /// The btVoxelShape is a three dimensional grid of arbitrary size, with each cell containing a voxel. The contents of each cell is delegated to a

@@ -101,16 +101,21 @@ struct VoxelWorld : public btVoxelContentProvider
 
 					btVector3i blockPos(x, yShapeThing, z);
 					setOfBlocks.push_back(blockPos);
-					voxelData[convertPosToIndex(x, yShapeThing, z)] = 1;
+					// Mark this block as being solid
+					voxelData[convertPosToIndex(x, yShapeThing, z)] |= 128u;
 
+					// Increase the neighbor count of all voxel neighbors by 1.
 					for (int xOff = -1; xOff <= 1; xOff++) {
 						for (int yOff = -1; yOff <= 1; yOff++) {
 							for (int zOff = -1; zOff <= 1; zOff++) {
 								if (xOff == 0 && yOff == 0 && zOff == 0) {
 									continue;
 								}
-								// Promote type to hasNeighbors
-								voxelData[convertPosToIndex(x + xOff, yShapeThing + yOff, z + zOff)] |= 128;
+								// Increase the neighbor count of this voxel data by 1
+								const uint8_t oldVoxelData = voxelData[convertPosToIndex(x + xOff, yShapeThing + yOff, z + zOff)];
+								const uint8_t oldNeighborCount = oldVoxelData & 127u;
+								const uint8_t newNeightborCount = oldNeighborCount + 1;
+								voxelData[convertPosToIndex(x + xOff, yShapeThing + yOff, z + zOff)] = (oldVoxelData & 128u) | (newNeightborCount);
 							}
 						}
 					}
@@ -119,10 +124,10 @@ struct VoxelWorld : public btVoxelContentProvider
 		}
 	}
 
-	void getVoxel(int x, int y, int z,btVoxelInfo& info) const override {
+	void getVoxel(int x, int y, int z, btVoxelInfo& info) const override {
 		btVector3i blockPos(x, y, z);
 
-		if ((voxelData[convertPosToIndex(x, y, z)] & 1) == 1) {
+		if (voxelData[convertPosToIndex(x, y, z)] & 128u) {
 			info.m_blocking = true;
 			info.m_voxelTypeId = 1;
 			info.m_tracable = true;
@@ -151,20 +156,23 @@ struct VoxelWorld : public btVoxelContentProvider
 		return setOfBlocks.end();
 	}
 
-	bool isProximity(int x, int y, int z) const override {
-		return (voxelData[convertPosToIndex(x, y, z)] & 128u) != 0;
-	}
-
-	bool isSurface(int x, int y, int z) const override {
-		return (voxelData[convertPosToIndex(x, y, z)] & 1u) != 0;
-	}
-
-	bool isInterior(int x, int y, int z) const override {
-		return false;
-	}
-
-	bool isAir(int x, int y, int z) const override {
-		return false;
+	uint8_t getVoxelType(int x, int y, int z) const override {
+		const uint8_t voxData = voxelData[convertPosToIndex(x, y, z)];
+		const bool isSet = (voxData & 128u) == 128u;
+		const uint8_t neighborCount = voxData & 127u;
+		if (isSet) {
+			if (neighborCount != 26) {
+				return VOX_TYPE_SURFACE;
+			} else {
+				return VOX_TYPE_INTERIOR;
+			}
+		} else {
+			if (neighborCount != 0) {
+				return VOX_TYPE_PROXIMITY;
+			} else {
+				return VOX_TYPE_AIR;
+			}
+		}
 	}
 };
 
@@ -195,7 +203,7 @@ void VoxelDemo::initPhysics()
 	btVector3 rotationAxis(1, 0, 0);
 	rotationAxis.normalize();
 
-	float rotationAngle = 0.;
+	float rotationAngle = .3;
 	btQuaternion rotationQuaternion(rotationAxis, rotationAngle);
 
 	// For now, the ground transform is just the origin no rotation transform. Must btVoxelCollisionAlgorithm to support
