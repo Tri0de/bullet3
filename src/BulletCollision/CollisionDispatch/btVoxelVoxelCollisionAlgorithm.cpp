@@ -16,17 +16,11 @@ subject to the following restrictions:
 
 #include <limits.h>
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
-#include <cassert>
-#include <assert.h>
 #include "BulletCollision/CollisionDispatch/btVoxelVoxelCollisionAlgorithm.h"
 #include "BulletCollision/CollisionDispatch/btCollisionObject.h"
 #include "BulletCollision/CollisionShapes/btVoxelShape.h"
-#include "BulletCollision/BroadphaseCollision/btDbvt.h"
 #include "LinearMath/btIDebugDraw.h"
-#include "LinearMath/btAabbUtil2.h"
 #include "btManifoldResult.h"
-#include "BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h"
-#include "btBoxBoxDetector.h"
 
 btVoxelVoxelCollisionAlgorithm::btVoxelVoxelCollisionAlgorithm(const btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap, bool isSwapped)
 	: btCollisionAlgorithm(ci),
@@ -46,9 +40,6 @@ btVoxelVoxelCollisionAlgorithm::~btVoxelVoxelCollisionAlgorithm()
 	}
 }
 
-#define BT_VOXEL_NEGATIVE_INFINITY -999.
-#define BT_VOXEL_NORMAL_CONFLICT_THRESHOLD .3
-
 void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut)
 {
 	// These are swapped because I must've mixed up the pointshell and voxmap shapes in the implementation
@@ -61,7 +52,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 	btAssert(voxMapCollisionObject->getCollisionShape()->isVoxel());
 
 	// Setup the collision manifold
-	// I'm not sure what this code does, but other collision algorithms do this exactly setup this.
+	// I'm not sure what this code does, but other collision algorithms do this to setup their manifold.
 	if (!m_sharedManifold) {
 		m_sharedManifold = m_dispatcher->getNewManifold(body0Wrap->getCollisionObject(), body1Wrap->getCollisionObject());
 		m_ownManifold = true;
