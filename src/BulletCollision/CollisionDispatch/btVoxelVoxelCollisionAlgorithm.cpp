@@ -117,7 +117,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 			const btVector3 offsetDirection = offsetDirections[i];
 
 			// Don't add points if there's another block there
-			const btVector3i blockPosNextToMe(blockPos.x - (int) offsetDirection.x(), blockPos.y - (int) offsetDirection.y(), blockPos.z - (int) offsetDirection.z());
+			const btVector3i blockPosNextToMe(blockPos.x + (int) offsetDirection.x(), blockPos.y + (int) offsetDirection.y(), blockPos.z + (int) offsetDirection.z());
 			const uint8_t blockNextToMeType = pointShellShape->getContentProvider()->getVoxelType(blockPosNextToMe.x, blockPosNextToMe.y, blockPosNextToMe.z);
 
 			// Skip these points
@@ -130,7 +130,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 			const btScalar pointDiameter = .5;
 
 			switch (i) {
-				case 3:
+				case 0:
 					facePoints[0] = btVector3(.75, .25, .25);
 					facePoints[1] = btVector3(.75, .25, .75);
 					facePoints[2] = btVector3(.75, .75, .25);
@@ -142,13 +142,13 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 					facePoints[2] = btVector3(.75, .75, .25);
 					facePoints[3] = btVector3(.75, .75, .75);
 					break;
-				case 5:
+				case 2:
 					facePoints[0] = btVector3(.25, .25, .75);
 					facePoints[1] = btVector3(.25, .75, .75);
 					facePoints[2] = btVector3(.75, .25, .75);
 					facePoints[3] = btVector3(.75, .75, .75);
 					break;
-				case 0:
+				case 3:
 					facePoints[0] = btVector3(.25, .25, .25);
 					facePoints[1] = btVector3(.25, .25, .75);
 					facePoints[2] = btVector3(.25, .75, .25);
@@ -160,7 +160,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 					facePoints[2] = btVector3(.75, .25, .25);
 					facePoints[3] = btVector3(.75, .25, .75);
 					break;
-				case 2:
+				case 5:
 					facePoints[0] = btVector3(.25, .25, .25);
 					facePoints[1] = btVector3(.25, .75, .25);
 					facePoints[2] = btVector3(.75, .25, .25);
@@ -230,11 +230,13 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 
 				// Prioritize points in surface and interior voxels by increasing the collision depth
 				// TODO: This isn't necessarily right, it depends on the normal direction; but this works for now.
-				if (voxelType == VOX_TYPE_SURFACE) {
-					collisionDepth -= .75;
-				}
-				if (voxelType == VOX_TYPE_INTERIOR) {
-					collisionDepth -= 1.75;
+				if (i == 1 || i == 4) {
+					if (voxelType == VOX_TYPE_SURFACE) {
+						collisionDepth -= .75;
+					}
+					if (voxelType == VOX_TYPE_INTERIOR) {
+						collisionDepth -= 1.75;
+					}
 				}
 
 				// Check if there was a collision

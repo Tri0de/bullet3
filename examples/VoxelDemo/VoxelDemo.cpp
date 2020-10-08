@@ -207,7 +207,7 @@ void VoxelDemo::initPhysics()
 	btVector3 rotationAxis(1, 0, 0);
 	rotationAxis.normalize();
 
-	float rotationAngle = 3.14 / 2; // .3; // 3.14 / 2;
+	float rotationAngle = 0; // 3.14 / 2; // .3; // 3.14 / 2;
 	btQuaternion rotationQuaternion(rotationAxis, rotationAngle);
 
 	// For now, the ground transform is just the origin no rotation transform. Must btVoxelCollisionAlgorithm to support
@@ -218,12 +218,7 @@ void VoxelDemo::initPhysics()
 	{
 		btScalar mass(0.);
 
-
-
-
-
 		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
-
 
 		// Create another voxel world, make this one fall
 		btScalar fallingVoxelWorldMass(10.);
@@ -232,13 +227,13 @@ void VoxelDemo::initPhysics()
 		fallingTransform.setOrigin(btVector3(0, 50, 0));
 
 
-		// auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
+		auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
 
 		btTransform fallingTransform2;
 		fallingTransform2.setIdentity();
 		fallingTransform2.setOrigin(btVector3(3, 30, 0));
 
-		// auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
+		auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
 
 		btTransform fallingTransform3;
 		fallingTransform3.setIdentity();
@@ -247,9 +242,6 @@ void VoxelDemo::initPhysics()
 
 
 		auto* fallingVoxelWorld3 = createRigidBody(fallingVoxelWorldMass, fallingTransform3, voxelWorld, btVector4(0,0,0,0));
-
-
-
 
 	}
 
