@@ -102,72 +102,70 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 			(pointShellShapeTransform.getBasis() * offsetDirections[5])
 	};
 
-	// Iterate over every "surface" point in the pointshell, and add collisions to the manifold if any are found.
+	// The center of the 4 collision spheres used for each face
+	const btVector3 cubeFaceSphereCenters[6][4] = {
+			{
+					btVector3(.25, -.25, -.25),
+					btVector3(.25, -.25, .25),
+					btVector3(.25, .25, -.25),
+					btVector3(.25, .25, .25)
+			},
+			{
+					btVector3(-.25, .25, -.25),
+					btVector3(-.25, .25, .25),
+					btVector3(.25, .25, -.25),
+					btVector3(.25, .25, .25)
+			},
+			{
+					btVector3(-.25, -.25, .25),
+					btVector3(-.25, .25, .25),
+					btVector3(.25, -.25, .25),
+					btVector3(.25, .25, .25)
+			},
+			{
+					btVector3(-.25, -.25, -.25),
+					btVector3(-.25, -.25, .25),
+					btVector3(-.25, .25, -.25),
+					btVector3(-.25, .25, .25)
+			},
+			{
+					btVector3(-.25, -.25, -.25),
+					btVector3(-.25, -.25, .25),
+					btVector3(.25, -.25, -.25),
+					btVector3(.25, -.25, .25)
+			},
+			{
+					btVector3(-.25, -.25, -.25),
+					btVector3(-.25, .25, -.25),
+					btVector3(.25, -.25, -.25),
+					btVector3(.25, .25, -.25)
+			}
+	};
+
+	// The size of each sphere we're testing
+	const btScalar sphereRadius = .25;
+
+	// Iterate over every "surface" voxel in the pointshell shape, and add collisions to the manifold if any are found.
 	for (auto it = pointShellShapeContentProvider->begin(); it != pointShellShapeContentProvider->end(); it++) {
-		// In every iteration we are handling collisions between the point (*it) and the voxel it collides with (in other),
-		// if there is one.
+		// The block position of the surface voxel we are testing.
 		const btVector3i blockPos = *it;
 
 		// For each surface voxel, process collision for all 6 faces of the voxel
-		for (int i = 0; i < 6; i++) {
+		for (size_t i = 0; i < 6; i++) {
 			const btVector3 pointNormal = pointNormals[i];
 			const btVector3 offsetDirection = offsetDirections[i];
 
 			// Don't run collision on this face if there is another voxel covering this face
 			const btVector3i blockPosNextToMe(blockPos.x + (int) offsetDirection.x(), blockPos.y + (int) offsetDirection.y(), blockPos.z + (int) offsetDirection.z());
-			const uint8_t blockNextToMeType = pointShellShape->getContentProvider()->getVoxelType(blockPosNextToMe.x, blockPosNextToMe.y, blockPosNextToMe.z);
-
+			const uint8_t blockNextToMeType = pointShellShapeContentProvider->getVoxelType(blockPosNextToMe.x, blockPosNextToMe.y, blockPosNextToMe.z);
 			if (blockNextToMeType == VOX_TYPE_INTERIOR || blockNextToMeType == VOX_TYPE_SURFACE) {
 				// Another voxel is covering this face, so skip collision on this face.
 				continue;
 			}
 
-			// Approximate the face as 4 points
-			btVector3 facePoints[4];
-
-			// Determine the 4 points based on the face number
-			switch (i) {
-				case 0:
-					facePoints[0] = btVector3(.75, .25, .25);
-					facePoints[1] = btVector3(.75, .25, .75);
-					facePoints[2] = btVector3(.75, .75, .25);
-					facePoints[3] = btVector3(.75, .75, .75);
-					break;
-				case 1:
-					facePoints[0] = btVector3(.25, .75, .25);
-					facePoints[1] = btVector3(.25, .75, .75);
-					facePoints[2] = btVector3(.75, .75, .25);
-					facePoints[3] = btVector3(.75, .75, .75);
-					break;
-				case 2:
-					facePoints[0] = btVector3(.25, .25, .75);
-					facePoints[1] = btVector3(.25, .75, .75);
-					facePoints[2] = btVector3(.75, .25, .75);
-					facePoints[3] = btVector3(.75, .75, .75);
-					break;
-				case 3:
-					facePoints[0] = btVector3(.25, .25, .25);
-					facePoints[1] = btVector3(.25, .25, .75);
-					facePoints[2] = btVector3(.25, .75, .25);
-					facePoints[3] = btVector3(.25, .75, .75);
-					break;
-				case 4:
-					facePoints[0] = btVector3(.25, .25, .25);
-					facePoints[1] = btVector3(.25, .25, .75);
-					facePoints[2] = btVector3(.75, .25, .25);
-					facePoints[3] = btVector3(.75, .25, .75);
-					break;
-				case 5:
-					facePoints[0] = btVector3(.25, .25, .25);
-					facePoints[1] = btVector3(.25, .75, .25);
-					facePoints[2] = btVector3(.75, .25, .25);
-					facePoints[3] = btVector3(.75, .75, .25);
-					break;
-			}
-
-			// Process collision for each point in this face
-			for (const auto collisionOffset : facePoints) {
-				const btVector3 pointPosInPointShell(blockPos.x + collisionOffset.x() - .5, blockPos.y + collisionOffset.y() - .5, blockPos.z + collisionOffset.z() - .5);
+			// Process collision for the 4 spheres used to approximate this face
+			for (const auto collisionOffset : cubeFaceSphereCenters[i]) {
+				const btVector3 pointPosInPointShell(blockPos.x + collisionOffset.x(), blockPos.y + collisionOffset.y(), blockPos.z + collisionOffset.z());
 
 				// The position of the point within the local space of the voxel shape.
 				const btVector3 pointPosInVoxMap = voxMapShapeInverseTransform * pointShellShapeTransform * pointPosInPointShell; // btVector3(blockPos.x, blockPos.y, blockPos.z);
@@ -175,7 +173,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 				const btVector3i collidingVoxelPos((int) round(pointPosInVoxMap.x()), (int) round(pointPosInVoxMap.y()), (int) round(pointPosInVoxMap.z()));
 
 				// The type of the colliding voxel
-				const uint8_t voxelType = voxMapShape->getContentProvider()->getVoxelType(collidingVoxelPos.x, collidingVoxelPos.y, collidingVoxelPos.z);
+				const uint8_t voxelType = voxMapShapeContentProvider->getVoxelType(collidingVoxelPos.x, collidingVoxelPos.y, collidingVoxelPos.z);
 
 				// If we're colliding with an AIR voxel then there is no collision
 				if (voxelType == VOX_TYPE_AIR) {
@@ -191,7 +189,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 				);
 
 				// The type of voxel this collision pushes the point towards
-				const uint8_t destinationVoxelType = voxMapShape->getContentProvider()->getVoxelType(destinationBlockPos.x, destinationBlockPos.y, destinationBlockPos.z);
+				const uint8_t destinationVoxelType = voxMapShapeContentProvider->getVoxelType(destinationBlockPos.x, destinationBlockPos.y, destinationBlockPos.z);
 
 				if (destinationBlockPos == collidingVoxelPos) {
 					// TODO: This isn't good, what do we do here?
@@ -223,10 +221,8 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 				const auto& voxelCenterInGlobal = voxMapShapeTransform * btVector3(collidingVoxelPos.x, collidingVoxelPos.y, collidingVoxelPos.z);
 				const auto& pointVoxelPositionDifference = pointPosInGlobal - voxelCenterInGlobal;
 
-				btScalar collisionDepth = -pointNormal.dot(pointVoxelPositionDifference);
-
-				// Since each "Point" has a diameter of .5, we add half of that to the collision depth (Negative depth means collision, positive means no collision).
-				collisionDepth += .25;
+				// We compute the collision depth using the tangent plane model, making sure to compensate for the size of the spheres used to approximate the cube
+				btScalar collisionDepth = -pointNormal.dot(pointVoxelPositionDifference) + .5 - sphereRadius;
 
 				// Prioritize points in surface and interior voxels by increasing the collision depth
 				if (voxelType == VOX_TYPE_SURFACE) {
