@@ -219,6 +219,12 @@ void VoxelDemo::initPhysics()
 		btScalar mass(0.);
 
 
+
+
+
+		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
+
+
 		// Create another voxel world, make this one fall
 		btScalar fallingVoxelWorldMass(10.);
 		btTransform fallingTransform;
@@ -226,13 +232,13 @@ void VoxelDemo::initPhysics()
 		fallingTransform.setOrigin(btVector3(0, 50, 0));
 
 
-		auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
+		// auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
 
 		btTransform fallingTransform2;
 		fallingTransform2.setIdentity();
 		fallingTransform2.setOrigin(btVector3(3, 30, 0));
 
-		auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
+		// auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
 
 		btTransform fallingTransform3;
 		fallingTransform3.setIdentity();
@@ -242,10 +248,6 @@ void VoxelDemo::initPhysics()
 
 		auto* fallingVoxelWorld3 = createRigidBody(fallingVoxelWorldMass, fallingTransform3, voxelWorld, btVector4(0,0,0,0));
 
-
-
-
-		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
 
 
 
