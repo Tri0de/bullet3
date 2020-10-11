@@ -20,6 +20,7 @@ subject to the following restrictions:
 #include <tuple>
 #include <BulletCollision/CollisionDispatch/btVoxelCollisionAlgorithm.h>
 #include <unordered_set>
+#include <vector>
 #include "btCollisionShape.h"
 
 #include "LinearMath/btVector3.h"

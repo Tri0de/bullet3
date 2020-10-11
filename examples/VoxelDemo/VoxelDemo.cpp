@@ -24,7 +24,7 @@ subject to the following restrictions:
 
 #include "../CommonInterfaces/CommonRigidBodyBase.h"
 
-#include<unordered_set >
+#include<unordered_set>
 
 // Bad style, but I need to get a reference to the ground object somehow.
 btRigidBody* groundRigidBody = nullptr;
