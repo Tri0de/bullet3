@@ -76,16 +76,18 @@ struct VoxelWorld : public btVoxelContentProvider
 	std::vector<btVector3i> setOfBlocks;
 
 	uint8_t* voxelData;
-	int minX, maxX, minY, maxY, minZ, maxZ;
+
+	const int minX, maxX, minY, maxY, minZ, maxZ;
 
 	// This is only correct assuming scaling is <1,1,1>
 	// Should always be equal to scaling / 2
 	btBoxShape* typicalBox = new btBoxShape((btVector3(btScalar(.5), btScalar(.5), btScalar(.5))));
 
-	VoxelWorld() {
-		minX = minY = minZ = -128;
-		maxX = maxY = maxZ = 127;
+	VoxelWorld() : minX(-128), minY(-128), minZ(-128), maxX(127), maxY(127), maxZ(127) {
 		voxelData = (uint8_t*) calloc((maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1), sizeof(uint8_t));
+	}
+
+	virtual void initializeShape() {
 		int radius = 10;
 		for (int y = 0; y < 5; y++) {
 			for (int x = -radius; x <= radius; x++) {
@@ -93,31 +95,69 @@ struct VoxelWorld : public btVoxelContentProvider
 					int yShapeThing = y;
 					if (abs(x) + abs(z) > 2) {
 						yShapeThing = 0;
-					}
+					} else if ((x + z) % 2 == 0) {
 						// Make a checkerboard pattern in the voxel world
-					else if ((x + z) % 2 == 0) {
 						continue;
 					}
+					setVoxelType(x, yShapeThing, z, true);
+				}
+			}
+		}
+	}
 
-					btVector3i blockPos(x, yShapeThing, z);
-					setOfBlocks.push_back(blockPos);
-					// Mark this block as being solid
-					voxelData[convertPosToIndex(x, yShapeThing, z)] |= 128u;
+	virtual void setVoxelType(int x, int y, int z, bool voxelType) override {
+		// The index of the voxel data in the voxel data array
+		const uint32_t voxelDataIndex = convertPosToIndex(x, y, z);
 
-					// Increase the neighbor count of all voxel neighbors by 1.
-					for (int xOff = -1; xOff <= 1; xOff++) {
-						for (int yOff = -1; yOff <= 1; yOff++) {
-							for (int zOff = -1; zOff <= 1; zOff++) {
-								if (xOff == 0 && yOff == 0 && zOff == 0) {
-									continue;
-								}
-								// Increase the neighbor count of this voxel data by 1
-								const uint8_t oldVoxelData = voxelData[convertPosToIndex(x + xOff, yShapeThing + yOff, z + zOff)];
-								const uint8_t oldNeighborCount = oldVoxelData & 127u;
-								const uint8_t newNeightborCount = oldNeighborCount + 1;
-								voxelData[convertPosToIndex(x + xOff, yShapeThing + yOff, z + zOff)] = (oldVoxelData & 128u) | (newNeightborCount);
-							}
+		// The old voxel data
+		const uint8_t oldVoxelData = voxelData[voxelDataIndex];
+		const bool oldVoxelType = (oldVoxelData & 128u) == 128u;
+		if (oldVoxelType != voxelType) {
+			// Invert the set/unset bit of the voxel data
+			const uint8_t newVoxelData = oldVoxelData ^ 128u;
+			// Update the voxel data array
+			voxelData[voxelDataIndex] = newVoxelData;
+
+			// Update the setOfBlocks
+			if (voxelType) {
+				// Add blockPos to setOfBlocks
+				btVector3i blockPos(x, y, z);
+				setOfBlocks.push_back(blockPos);
+			} else {
+				// Remove blockPos from setOfBlocks
+				btVector3i blockPos(x, y, z);
+				for (auto iter = setOfBlocks.begin(); iter != setOfBlocks.end(); ++iter) {
+					if (*iter == blockPos) {
+						setOfBlocks.erase(iter);
+						break;
+					}
+				}
+			}
+
+			// Update the neighbor count of the neighbors
+			for (int32_t xOff = -1; xOff <= 1; xOff++) {
+				for (int32_t yOff = -1; yOff <= 1; yOff++) {
+					for (int32_t zOff = -1; zOff <= 1; zOff++) {
+						if (xOff == 0 && yOff == 0 && zOff == 0) {
+							// Don't update our own neighbor count
+							continue;
 						}
+						const int32_t neighborX = x + xOff;
+						const int32_t neighborY = y + yOff;
+						const int32_t neighborZ = z + zOff;
+
+						if (neighborX < minX || neighborX > maxX || neighborY < minY || neighborY > maxY || neighborZ < minZ || neighborZ > maxZ) {
+							// This position is outside of the voxel shape, don't do anything
+							continue;
+						}
+
+						// Increase the neighbor count of this voxel data by 1
+						const uint32_t neighborVoxelIndex = convertPosToIndex(neighborX, neighborY, neighborZ);
+						const uint8_t oldVoxelData = voxelData[neighborVoxelIndex];
+						const uint8_t oldNeighborCount = oldVoxelData & 127u;
+						// If voxelType is true, increase neighbor count by 1, otherwise decrease it by 1
+						const uint8_t newNeightborCount = oldNeighborCount + voxelType ? 1 : -1;
+						voxelData[neighborVoxelIndex] = (oldVoxelData & 128u) | (newNeightborCount);
 					}
 				}
 			}
@@ -146,7 +186,7 @@ struct VoxelWorld : public btVoxelContentProvider
 		}
 	}
 
-	int convertPosToIndex(int x, int y, int z) const {
+	uint32_t convertPosToIndex(int32_t x, int32_t y, int32_t z) const {
 		size_t xLen = maxX - minX + 1;
 		size_t yLen = maxY - minY + 1;
 		return (x - minX) + xLen * (y - minY) + xLen * yLen * (z - minZ);
@@ -191,7 +231,8 @@ void VoxelDemo::initPhysics()
 	if (m_dynamicsWorld->getDebugDrawer())
 		m_dynamicsWorld->getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawWireframe+btIDebugDraw::DBG_DrawContactPoints);
 
-	btVoxelContentProvider* provider = new VoxelWorld();
+	VoxelWorld* provider = new VoxelWorld();
+	provider->initializeShape();
 
 	auto* voxelWorld = new btVoxelShape(provider, btVector3(-11.5, -1.5, -11.5), btVector3(11.5, 6.5, 11.5));
 
