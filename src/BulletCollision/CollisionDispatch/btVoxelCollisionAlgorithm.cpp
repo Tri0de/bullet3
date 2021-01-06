@@ -130,7 +130,7 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 		}
 		else
 		{
-			contentProvider->getVoxel(info.position.x, info.position.y, info.position.z, childInfo);
+			contentProvider->getVoxel(btVector3i(info.position.x, info.position.y, info.position.z), childInfo);
 			if(childInfo.m_collisionShape != nullptr)
 			{
 				if (info.algorithm != nullptr && (childInfo.m_collisionShape->getShapeType() != info.shapeType || !childInfo.m_blocking))

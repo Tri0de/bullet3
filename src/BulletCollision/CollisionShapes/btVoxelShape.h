@@ -40,7 +40,7 @@ ATTRIBUTE_ALIGNED16(struct) btVoxelInfo
 	/// It is somewhat optional, even with the same id the collision algorithm will attempt to detect changes
 	unsigned short	    m_voxelTypeId;
 	/// The shape of the voxel
-	btCollisionShape*	m_collisionShape;
+	const btCollisionShape*	m_collisionShape;
 	/// The offset of the shape from the center of the voxel
 	btVector3			m_collisionOffset;
 
@@ -116,13 +116,13 @@ ATTRIBUTE_ALIGNED16(struct) btVoxelInfo
 struct btVoxelContentProvider
 {
 	virtual ~btVoxelContentProvider() {}
-	virtual void getVoxel(int x, int y, int z, btVoxelInfo&) const = 0;
+	virtual void getVoxel(const btVector3i pos, btVoxelInfo&) const = 0;
 	// Used to iterate over all BlockPos in this voxel shape
 	// Should only ever be used for rendering in demos
 	virtual std::vector<btVector3i>::const_iterator begin() const = 0;
 	virtual std::vector<btVector3i>::const_iterator end() const = 0;
-	virtual uint8_t getVoxelType(int x, int y, int z) const = 0;
-	virtual void setVoxelType(int x, int y, int z, bool voxelType) = 0;
+	virtual uint8_t getVoxelType(const btVector3i pos) const = 0;
+	virtual void setVoxelType(const btVector3i pos, bool voxelType) = 0;
 };
 
 /// The btVoxelShape is a three dimensional grid of arbitrary size, with each cell containing a voxel. The contents of each cell is delegated to a

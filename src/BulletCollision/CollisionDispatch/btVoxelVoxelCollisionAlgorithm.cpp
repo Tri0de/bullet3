@@ -148,7 +148,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 
 			// Don't run collision on this face if there is another voxel covering this face
 			const btVector3i blockPosNextToMe(blockPos.x + (int) offsetDirection.x(), blockPos.y + (int) offsetDirection.y(), blockPos.z + (int) offsetDirection.z());
-			const uint8_t blockNextToMeType = pointShellShapeContentProvider->getVoxelType(blockPosNextToMe.x, blockPosNextToMe.y, blockPosNextToMe.z);
+			const uint8_t blockNextToMeType = pointShellShapeContentProvider->getVoxelType(btVector3i(blockPosNextToMe.x, blockPosNextToMe.y, blockPosNextToMe.z));
 			if (blockNextToMeType == VOX_TYPE_INTERIOR || blockNextToMeType == VOX_TYPE_SURFACE) {
 				// Another voxel is covering this face, so skip collision on this face.
 				continue;
@@ -164,7 +164,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 				const btVector3i collidingVoxelPos((int) round(pointPosInVoxMap.x()), (int) round(pointPosInVoxMap.y()), (int) round(pointPosInVoxMap.z()));
 
 				// The type of the colliding voxel
-				const uint8_t voxelType = voxMapShapeContentProvider->getVoxelType(collidingVoxelPos.x, collidingVoxelPos.y, collidingVoxelPos.z);
+				const uint8_t voxelType = voxMapShapeContentProvider->getVoxelType(btVector3i(collidingVoxelPos.x, collidingVoxelPos.y, collidingVoxelPos.z));
 
 				// If we're colliding with an AIR voxel then there is no collision
 				if (voxelType == VOX_TYPE_AIR) {
@@ -180,7 +180,7 @@ void btVoxelVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWra
 				);
 
 				// The type of voxel this collision pushes the point towards
-				const uint8_t destinationVoxelType = voxMapShapeContentProvider->getVoxelType(destinationBlockPos.x, destinationBlockPos.y, destinationBlockPos.z);
+				const uint8_t destinationVoxelType = voxMapShapeContentProvider->getVoxelType(btVector3i(destinationBlockPos.x, destinationBlockPos.y, destinationBlockPos.z));
 
 				if (destinationBlockPos == collidingVoxelPos) {
 					// TODO: This isn't good, what do we do here?
