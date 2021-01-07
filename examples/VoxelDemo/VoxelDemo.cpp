@@ -94,8 +94,8 @@ struct VoxelWorld : public btVoxelContentProvider
 	VoxelWorld() : VoxelWorld(btVector3i(-128, -128, -128), btVector3i(127, 127, 127)){
 	}
 
-	virtual void initializeShape() {
-		int radius = 10;
+	virtual void initializeLittleTower() {
+		int radius = 30;
 		for (int y = 0; y < 5; y++) {
 			for (int x = -radius; x <= radius; x++) {
 				for (int z = -radius; z <= radius; z++) {
@@ -107,6 +107,20 @@ struct VoxelWorld : public btVoxelContentProvider
 						continue;
 					}
 					setVoxelType(btVector3i(x, yShapeThing, z), true);
+				}
+			}
+		}
+	}
+
+	virtual void initializeSphere() {
+		const int radius = 8;
+		for (int x = -radius; x <= radius; x++) {
+			for (int y = -radius; y <= radius; y++) {
+				for (int z = -radius; z <= radius; z++) {
+					int distSq = x * x + y * y + z * z;
+					if (distSq <= radius * radius) {
+						setVoxelType(btVector3i(x, y, z), true);
+					}
 				}
 			}
 		}
@@ -158,11 +172,16 @@ struct VoxelWorld : public btVoxelContentProvider
 
 						// Increase the neighbor count of this voxel data by 1
 						const uint32_t neighborVoxelIndex = convertPosToIndex(btVector3i(neighborX, neighborY, neighborZ));
-						const uint8_t oldVoxelData = voxelData[neighborVoxelIndex];
-						const uint8_t oldNeighborCount = oldVoxelData & 127u;
+						const uint8_t neighborOldVoxelData = voxelData[neighborVoxelIndex];
+						const uint8_t oldNeighborCount = neighborOldVoxelData & 127u;
 						// If voxelType is true, increase neighbor count by 1, otherwise decrease it by 1
-						const uint8_t newNeightborCount = oldNeighborCount + voxelType ? 1 : -1;
-						voxelData[neighborVoxelIndex] = (oldVoxelData & 128u) | (newNeightborCount);
+						uint8_t newNeighborCount;
+						if (voxelType) {
+							newNeighborCount = oldNeighborCount + 1;
+						} else {
+							newNeighborCount = oldNeighborCount - 1;
+						}
+						voxelData[neighborVoxelIndex] = (neighborOldVoxelData & 128u) | (newNeighborCount);
 					}
 				}
 			}
@@ -234,19 +253,20 @@ void VoxelDemo::initPhysics()
 	if (m_dynamicsWorld->getDebugDrawer())
 		m_dynamicsWorld->getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawWireframe+btIDebugDraw::DBG_DrawContactPoints);
 
-	VoxelWorld* provider = new VoxelWorld();
-	provider->initializeShape();
+	VoxelWorld* littleTowerProvider = new VoxelWorld(btVector3i(-128, -10, -128), btVector3i(127, 245, 127));
+	littleTowerProvider->initializeLittleTower();
 
-	auto* voxelWorld = new btVoxelShape(provider, btVector3(-11.5, -1.5, -11.5), btVector3(11.5, 6.5, 11.5));
+	VoxelWorld* sphereProvider = new VoxelWorld(btVector3i(-128, -10, -128), btVector3i(127, 245, 127));
+	sphereProvider->initializeSphere();
 
-	// For now, just don't support scaling
-	// voxelWorld->setLocalScaling(btVector3(0.5, 0.5, 0.5));
-		
+	// Make voxel shapes
+	auto* voxelWorldShape = new btVoxelShape(littleTowerProvider, btVector3(-50, -1.5, -50), btVector3(50, 6.5, 50));
+	auto* voxelSphereShape = new btVoxelShape(sphereProvider, btVector3(-11.5, -8, -11.5), btVector3(11.5, 8, 11.5));
 
-	//groundShape->initializePolyhedralFeatures();
-//	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),50);
-	
-	m_collisionShapes.push_back(voxelWorld);
+	// Keep track of the shapes for memory deletion/cleanup once the demo ends
+	m_collisionShapes.push_back(voxelWorldShape);
+	m_collisionShapes.push_back(voxelSphereShape);
+
 
 	btVector3 rotationAxis(1, 0, 0);
 	rotationAxis.normalize();
@@ -262,30 +282,28 @@ void VoxelDemo::initPhysics()
 	{
 		btScalar mass(0.);
 
-		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorld, btVector4(0,0,0,0));
+		groundRigidBody = createRigidBody(mass, groundTransform, voxelWorldShape, btVector4(0, 0, 0, 0));
 
 		// Create another voxel world, make this one fall
 		btScalar fallingVoxelWorldMass(10.);
 		btTransform fallingTransform;
 		fallingTransform.setIdentity();
-		fallingTransform.setOrigin(btVector3(0, 50, 0));
+		fallingTransform.setOrigin(btVector3(0, 200, 0));
 
 
-		auto* fallingVoxelWorld = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelWorld, btVector4(0,0,0,0));
+		auto* fallingVoxelBody1 = createRigidBody(fallingVoxelWorldMass, fallingTransform, voxelSphereShape, btVector4(0, 0, 0, 0));
 
 		btTransform fallingTransform2;
 		fallingTransform2.setIdentity();
-		fallingTransform2.setOrigin(btVector3(3, 30, 0));
+		fallingTransform2.setOrigin(btVector3(0, 30, 0));
 
-		auto* fallingVoxelWorld2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelWorld, btVector4(0,0,0,0));
+		auto* fallingVoxelBody2 = createRigidBody(fallingVoxelWorldMass, fallingTransform2, voxelSphereShape, btVector4(0, 0, 0, 0));
 
 		btTransform fallingTransform3;
 		fallingTransform3.setIdentity();
-		fallingTransform3.setOrigin(btVector3(0, 20, -4));
+		fallingTransform3.setOrigin(btVector3(0, 40, -20));
 
-
-
-		auto* fallingVoxelWorld3 = createRigidBody(fallingVoxelWorldMass, fallingTransform3, voxelWorld, btVector4(0,0,0,0));
+		auto* fallingVoxelBody3 = createRigidBody(fallingVoxelWorldMass, fallingTransform3, voxelSphereShape, btVector4(0, 0, 0, 0));
 
 	}
 
