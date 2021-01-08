@@ -14,10 +14,8 @@ subject to the following restrictions:
 */
 
 #include "btVoxelShape.h"
-#include "btCollisionShape.h"
-#include "btBoxShape.h"
 
-btVoxelShape::btVoxelShape(btVoxelContentProvider* contentProvider,const btVector3& aabbMin,const btVector3& aabbMax)
+btVoxelShape::btVoxelShape(btVoxelShapeData* contentProvider,const btVector3& aabbMin,const btVector3& aabbMax)
 : m_contentProvider(contentProvider), m_localAabbMin(aabbMin),
 m_localAabbMax(aabbMax),
 m_collisionMargin(btScalar(0.)),

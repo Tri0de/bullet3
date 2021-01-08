@@ -217,7 +217,7 @@ void CollisionShape2TriangleMesh(btCollisionShape* collisionShape, const btTrans
 						// This adds the voxel world to the example renderer
 						const auto* const voxelShape = (btVoxelShape*) collisionShape;
 						const auto scalingVector = voxelShape->getLocalScaling();
-						const btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
+						const btVoxelShapeData* contentProvider = (btVoxelShapeData*) voxelShape->getContentProvider();
 
 						// The render shape of each voxel, for now just render each one as a cube
 						auto* const renderShape = new btBoxShape(btVector3(scalingVector.x() / 2, scalingVector.y() / 2, scalingVector.z() / 2));

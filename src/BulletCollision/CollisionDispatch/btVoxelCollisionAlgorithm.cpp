@@ -104,7 +104,7 @@ void btVoxelCollisionAlgorithm::processCollision(const btCollisionObjectWrapper*
 
 	btVoxelInfo childInfo;
 	numChildren = m_voxelCollisionInfo.size();
-	btVoxelContentProvider* contentProvider = voxelShape->getContentProvider();
+	btVoxelShapeData* contentProvider = voxelShape->getContentProvider();
 
 	while (i < numChildren)
 	{
