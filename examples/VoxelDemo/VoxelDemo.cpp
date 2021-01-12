@@ -41,11 +41,11 @@ struct VoxelDemo : public CommonRigidBodyBase
 	virtual void renderScene();
 	void resetCamera()
 	{
-		float dist = 20;
-		float pitch = -45;
-		float yaw = 45;
-		float targetPos[3]={0,0.5,0};
-		m_guiHelper->resetCamera(dist,pitch,yaw,targetPos[0],targetPos[1],targetPos[2]);
+		const float dist = 80;
+		const float pitch = -25;
+		const float yaw = 45;
+		const float targetPos[3]={0,0.5,0};
+		m_guiHelper->resetCamera(dist, yaw, pitch, targetPos[0], targetPos[1], targetPos[2]);
 	}
 
 	void stepSimulation(float deltaTime) override
