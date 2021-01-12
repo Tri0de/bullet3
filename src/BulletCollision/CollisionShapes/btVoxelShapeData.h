@@ -5,6 +5,7 @@
 #ifndef BT_VOXEL_SHAPE_DATA_H
 #define BT_VOXEL_SHAPE_DATA_H
 
+#include <cstdint>
 #include <vector>
 #include "btBoxShape.h"
 #include "btVoxelInfo.h"
